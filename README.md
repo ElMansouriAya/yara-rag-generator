@@ -70,7 +70,7 @@ Each record follows the structure below:
 
 ```json
 {
-  "id": "001",
+  "id": "RAN-001",
   "description": "Ransomware encrypting files using AES-256",
   "malware_family": "LockBit",
   "malware_type": "ransomware",
@@ -99,7 +99,9 @@ Each record follows the structure below:
   ],
   "source_document": "cisa_lockbit_report.pdf",
   "confidence": "high",
-  "notes_on_fp": "May match VeraCrypt if entropy alone is used"
+  "notes_on_fp": "May match VeraCrypt if entropy alone is used",
+  "language": "en",
+  "embedding_text": "Ransomware encrypting files using AES-256 file encryption AES usage shadow copy deletion .locked ransom_note.txt vssadmin delete shadows LockBit ransomware"
 }
 ```
 
