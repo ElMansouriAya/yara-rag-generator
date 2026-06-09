@@ -24,8 +24,7 @@ data/raw/
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
-.Python
+*.so.Python
 build/
 develop-eggs/
 dist/
@@ -74,3 +73,4 @@ desktop.ini
 
 # Logs
 *.log
+
