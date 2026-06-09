@@ -117,6 +117,24 @@ _APT_FAMILY_MAP = {
     'fancy': 'FancyBear',
     'unc1151': 'Ghostwriter',
     'tran_duy_linh': 'TranDuyLinh',
+    'sofacy': 'FancyBear',        # Sofacy = FancyBear/APT28
+    'apt28': 'FancyBear',
+    'xagent': 'FancyBear',
+    'whitebear': 'Turla',
+    'derusbi': 'Derusbi',
+    'sakula': 'Sakula',
+    'careto': 'Careto',
+    'equationgroup': 'EquationGroup',
+    'eqgrp': 'EquationGroup',
+    'rokrat': 'RokRAT',
+    'blackkingdom': 'BlackKingDom',
+    'hangover': 'Hangover',
+    'nazar': 'Nazar',
+    'poweliks': 'Poweliks',
+    'deputydog': 'DeputyDog',
+    'alienspy': 'AlienSpy',
+    'hworm': 'HWorm',
+    'hizorat': 'HiZorRAT',
 }
 
 
@@ -148,6 +166,16 @@ class EntityExtractor:
             # Tools (détectés dans les YARA)
             'NSPPS', 'Gazer', 'ComRAT', 'REIGN', 'Coathanger',
             'BabbleLoader', 'XLogin',
+            'RokRAT', 'Careto', 'BlackKingDom', 'Sfile', 'Derusbi',
+            'Sakula', 'GhostShell', 'Hangover', 'EquationGroup',
+            'Sofacy', 'WhiteBear', 'Poweliks', 'Pony', 'MacSpy',
+            'XAgent', 'Nazar', 'HiZorRAT', 'AlienSpy', 'HWorm',
+            'DeputyDog', 'Proton', 'ChaosRansomware', 'BlackGuard',
+            'Jupyter', 'Onyx', 'Carbanak', 'TA410', 'Tendyron',
+            'Fareit', 'Zbot', 'Zeus', 'SpyEye', 'Citadel',
+            'Gozi', 'Ursnif', 'Danabot', 'Trickbot', 'ZLoader',
+            'BazarLoader', 'Amadey', 'Lokibot', 'Azorult',
+            'RedLine', 'Lumma', 'Phorpiex', 'Hancitor',
         ]
 
         self.malware_types = {
@@ -642,3 +670,27 @@ class EntityExtractor:
             return ' '.join(top)
         non_toc = [s for s in sentences if not re.match(r'^\d+[\.\)]\s*\w', s)]
         return ' '.join(non_toc[:n]) if non_toc else (sentences[0] if sentences else '')
+    
+    def extract_family_from_source_filename(self, filename: str) -> str:
+        """
+        Extrait la famille depuis le nom du fichier .yar/.yara.
+        Ex: 'malware_macos_apt_sofacy_xagent.yara' → 'FancyBear'
+        Ex: 'RokRAT.yar' → 'RokRAT'
+        Ex: 'apt_careto_generic.yar' → 'Careto'
+        """
+        # Normaliser
+        name = filename.lower()
+        name = re.sub(r'\.(yar|yara|rule)$', '', name)
+        name = re.sub(r'[_\-\.]+', ' ', name)
+        
+        # Vérifier chaque famille connue
+        for family in self.known_families:
+            if family.lower() in name:
+                return family
+        
+        # Vérifier le mapping APT
+        for key, value in _APT_FAMILY_MAP.items():
+            if key in name:
+                return value
+        
+        return 'unknown'

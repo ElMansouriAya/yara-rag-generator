@@ -58,6 +58,7 @@ class SchemaBuilder:
             adapted.get('malware_family')
             or self.extractor.extract_malware_family(
                 text, filename=filename, yara_text=yara_text_sample
+            or self.extractor.extract_family_from_source_filename(filename)
             )
         )
 
