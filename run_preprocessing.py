@@ -12,7 +12,7 @@ from collections import Counter
 
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from preprocessing.knowledge_base import KnowledgeBaseBuilder
+from src.NLP.preprocessing.knowledge_base import KnowledgeBaseBuilder
 
 
 def print_quality_report(records):

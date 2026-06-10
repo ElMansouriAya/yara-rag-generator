@@ -1,0 +1,6 @@
+PyMuPDF
+pdfplumber
+beautifulsoup4
+lxml
+langdetect
+
