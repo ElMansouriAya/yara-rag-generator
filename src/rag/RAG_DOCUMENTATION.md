@@ -107,7 +107,7 @@ yara-rag-generator/
 │   ├── raw/                        ← PDFs (gitignored)
 │   ├── dataset_yara_mvp.json              ← dev/testing (32 records)
 │   ├── processed/
-│   │   ├── filtered/
+│   │   └── filtered/
 │   │       └── dataset_production_enriched.json   ← NLP team delivery (3046 records)
 │   └── indexes/                    ← FAISS + BM25 saved indexes (gitignored)
 │       ├── faiss_index.bin         ← FAISS vector database (~4.7 MB)
@@ -166,7 +166,7 @@ yara-rag-generator/
 
 ---
 
-## 4. Index Management ← NEW SECTION
+## 4. Index Management 
 
 ### Automatic Detection
 
