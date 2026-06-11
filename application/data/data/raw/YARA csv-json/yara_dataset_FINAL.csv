@@ -1,0 +1,3460 @@
+"id","query_nl","query_style","language","malware_family","malware_type","mitre_technique","mitre_id","rule_name","yara_rule","label","difficulty","source_type"
+"1","Detect a ransomware that encrypts files using CryptEncrypt API","technical","en","WannaCry","ransomware","Data Encrypted for Impact","T1486","Detect_WannaCry_CryptEncrypt","rule Detect_WannaCry_CryptEncrypt : ransomware encryption
+{
+    meta:
+        description = ""Detects WannaCry ransomware via CryptEncrypt API and .WNCRY extension""
+        author      = ""Student Dataset""
+        date        = ""2026-01-10""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1486/""
+
+    strings:
+        // Windows crypto API used for file encryption
+        $api1 = ""CryptEncrypt""
+        $api2 = ""CryptAcquireContext"" nocase
+
+        // WannaCry specific file extension
+        $ext  = "".WNCRY"" fullword
+
+        // Ransom note filename
+        $note = ""@Please_Read_Me@.txt"" fullword
+
+        // WannaCry string marker
+        $mark = ""WannaCry"" nocase
+
+    condition:
+        pe.is_pe and
+        filesize < 10MB and
+        $api1 and
+        ($ext or $note or $mark)
+}","malicious","easy","manual"
+"2","Détecter un ransomware LockBit qui renomme les fichiers avec l'extension .locked","technical_fr","fr","LockBit","ransomware","Data Encrypted for Impact","T1486","Detect_LockBit_Extension","rule Detect_LockBit_Extension : ransomware lockbit
+{
+    meta:
+        description = ""Detects LockBit ransomware via .locked extension and ransom note""
+        author      = ""Student Dataset""
+        date        = ""2026-01-10""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1486/""
+
+    strings:
+        // LockBit file extensions
+        $ext1 = "".locked""  fullword
+        $ext2 = "".lockbit"" fullword
+
+        // LockBit ransom note
+        $note = ""LockBit_Readme.txt"" fullword
+
+        // LockBit string in binary
+        $id   = ""LockBit"" nocase
+
+        // Hex pattern found in LockBit samples
+        $hex1 = { 4C 6F 63 6B 42 69 74 }
+
+    condition:
+        filesize < 5MB and
+        ($ext1 or $ext2 or $note) and
+        ($id or $hex1)
+}","malicious","easy","manual"
+"3","i need a rule to catch malware that downloads files from internet and hides itself","informal","en","Generic Downloader","trojan","Ingress Tool Transfer","T1105","Detect_Generic_Downloader","rule Detect_Generic_Downloader : trojan downloader
+{
+    meta:
+        description = ""Detects generic downloader trojan using URLDownloadToFile and file hiding""
+        author      = ""Student Dataset""
+        date        = ""2026-01-11""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1105/""
+
+    strings:
+        // URL patterns for download
+        $url1 = ""http://""  wide ascii
+        $url2 = ""https://"" wide ascii
+
+        // Windows API for downloading files
+        $dl   = ""URLDownloadToFile"" wide ascii
+
+        // API to hide downloaded file
+        $hide = ""SetFileAttributesA""
+
+        // Common hidden attribute value
+        $attr = { 02 00 00 00 }
+
+    condition:
+        pe.is_pe and
+        filesize < 2MB and
+        ($url1 or $url2) and
+        $dl and
+        $hide
+}","malicious","medium","manual"
+"4","Règle YARA pour détecter un keylogger capturant les frappes clavier","technical_fr","fr","Generic Keylogger","spyware","Input Capture: Keylogging","T1056.001","Detect_Keylogger_API","rule Detect_Keylogger_API : spyware keylogger
+{
+    meta:
+        description = ""Detects keylogger using Windows hook API to capture keystrokes""
+        author      = ""Student Dataset""
+        date        = ""2026-01-11""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1056/001/""
+
+    strings:
+        // Windows global keyboard hook
+        $api1 = ""SetWindowsHookEx""  wide ascii
+        $api2 = ""GetAsyncKeyState""  wide ascii
+        $api3 = ""GetKeyboardState""  wide ascii
+
+        // Log file name pattern
+        $log1 = ""keylog"" nocase
+        $log2 = ""keystroke"" nocase
+
+        // Hex opcode for hook callback pattern
+        $hex1 = { 55 8B EC 83 EC ?? 53 56 57 }
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        (2 of ($api1, $api2, $api3)) and
+        ($log1 or $log2 or $hex1)
+}","malicious","medium","manual"
+"5","detect PE file that injects code into other processes using CreateRemoteThread","technical","en","Injector","trojan","Process Injection","T1055","Detect_Process_Injection_CRT","rule Detect_Process_Injection_CRT : trojan injection
+{
+    meta:
+        description = ""Detects classic process injection via CreateRemoteThread technique""
+        author      = ""Student Dataset""
+        date        = ""2026-01-11""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1055/""
+
+    strings:
+        // Classic injection API chain
+        $api1 = ""CreateRemoteThread"" wide ascii
+        $api2 = ""VirtualAllocEx""     wide ascii
+        $api3 = ""WriteProcessMemory"" wide ascii
+        $api4 = ""OpenProcess""        wide ascii
+
+        // LoadLibrary for DLL injection variant
+        $api5 = ""LoadLibraryA""       wide ascii
+
+        // PE magic bytes
+        $mz   = { 4D 5A }
+
+    condition:
+        pe.is_pe and
+        filesize < 20MB and
+        $mz at 0 and
+        3 of ($api1, $api2, $api3, $api4) and
+        $api5
+}","malicious","hard","manual"
+"6","Je veux détecter un virus qui se propage via clé USB via autorun.inf","formal_fr","fr","USB Worm","worm","Replication Through Removable Media","T1091","Detect_USB_Worm_Autorun","rule Detect_USB_Worm_Autorun : worm usb autorun
+{
+    meta:
+        description = ""Detects USB worm using autorun.inf to spread via removable media""
+        author      = ""Student Dataset""
+        date        = ""2026-01-12""
+        severity    = ""medium""
+        reference   = ""https://attack.mitre.org/techniques/T1091/""
+
+    strings:
+        // Autorun configuration file
+        $autorun = ""autorun.inf"" nocase
+
+        // Autorun open command
+        $open    = ""open=""
+
+        // Shell command override
+        $shell   = ""shell\open\command"" nocase
+
+        // Self-copy pattern
+        $copy    = ""CopyFileA"" wide ascii
+
+    condition:
+        filesize < 1MB and
+        $autorun and
+        ($open or $shell) and
+        $copy
+}","malicious","easy","manual"
+"7","find malware using base64 encoding to hide payload and decode it at runtime","technical","en","Obfuscated Malware","trojan","Obfuscated Files or Information","T1027","Detect_Base64_Obfuscation","rule Detect_Base64_Obfuscation : trojan obfuscation
+{
+    meta:
+        description = ""Detects base64-encoded payload decoded and executed at runtime""
+        author      = ""Student Dataset""
+        date        = ""2026-01-12""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1027/""
+
+    strings:
+        // Long base64 string pattern
+        $b64   = /[A-Za-z0-9+\/]{60,}={0,2}/
+
+        // Windows crypto decode API
+        $decode1 = ""CryptStringToBinary"" wide ascii
+
+        // PowerShell decode function
+        $decode2 = ""FromBase64String""    wide ascii
+
+        // Python decode pattern
+        $decode3 = ""b64decode""           wide ascii
+
+    condition:
+        filesize < 10MB and
+        $b64 and
+        ($decode1 or $decode2 or $decode3)
+}","malicious","medium","manual"
+"8","détecter un malware qui désactive Windows Defender pour rester invisible","informal_fr","fr","Defender Killer","trojan","Impair Defenses","T1562.001","Detect_Disable_Windows_Defender","rule Detect_Disable_Windows_Defender : trojan defense_evasion
+{
+    meta:
+        description = ""Detects attempt to disable Windows Defender real-time protection""
+        author      = ""Student Dataset""
+        date        = ""2026-01-12""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1562/001/""
+
+    strings:
+        // PowerShell command to disable Defender
+        $cmd1 = ""Set-MpPreference -DisableRealtimeMonitoring"" nocase wide ascii
+
+        // Service stop command
+        $cmd2 = ""sc stop WinDefend"" nocase
+
+        // Registry key to disable
+        $reg1 = ""DisableAntiSpyware""
+
+        // Defender registry path
+        $reg2 = ""Windows Defender\Real-Time Protection"" nocase
+
+    condition:
+        filesize < 5MB and
+        any of them
+}","malicious","medium","manual"
+"9","Write a YARA rule to detect Emotet banking trojan C2 communication","technical","en","Emotet","banker","Command and Control","T1071","Detect_Emotet_C2","rule Detect_Emotet_C2 : banker trojan c2
+{
+    meta:
+        description = ""Detects Emotet banking trojan C2 communication and mutex artifacts""
+        author      = ""Student Dataset""
+        date        = ""2026-01-13""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1071/""
+
+    strings:
+        // Emotet mutex pattern
+        $mutex = ""Global\Emotet"" nocase
+
+        // PDB debug string
+        $pdb   = ""emotet"" nocase
+
+        // Fake browser user-agent used by Emotet
+        $ua    = ""Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.1)"" wide ascii
+
+        // Network API for C2 contact
+        $inet  = ""InternetOpenUrl"" wide ascii
+
+        // Emotet hex signature
+        $hex1  = { 8B 45 FC 83 C0 01 89 45 FC 8B 45 FC 3B 45 F4 }
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        ($mutex or $pdb) and
+        ($ua or $inet or $hex1)
+}","malicious","hard","manual"
+"10","détecter un ransomware double extorsion qui exfiltre avant de chiffrer les données","technical_fr","fr","BlackCat","ransomware","Exfiltration Over C2 Channel","T1041","Detect_DoubleExtortion_Ransomware","rule Detect_DoubleExtortion_Ransomware : ransomware exfiltration
+{
+    meta:
+        description = ""Detects double extortion ransomware: exfiltrates then encrypts""
+        author      = ""Student Dataset""
+        date        = ""2026-01-13""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1041/""
+
+    strings:
+        // Exfiltration tools
+        $exfil1 = ""curl.exe""   nocase wide ascii
+        $exfil2 = ""rclone.exe"" nocase wide ascii
+
+        // Compression before exfil
+        $compress = ""7z.exe""   nocase wide ascii
+
+        // Encryption API
+        $encrypt  = ""CryptEncrypt"" wide ascii
+
+        // Ransom note markers
+        $note1 = ""YOUR FILES ARE ENCRYPTED""   nocase
+        $note2 = ""double extortion""           nocase
+        $note3 = ""visit our dark web""         nocase
+
+    condition:
+        pe.is_pe and
+        filesize < 20MB and
+        ($exfil1 or $exfil2 or $compress) and
+        $encrypt and
+        any of ($note1, $note2, $note3)
+}","malicious","hard","manual"
+"11","detect trojan modifying Windows registry Run key for startup persistence","technical","en","Generic Trojan","trojan","Registry Run Keys","T1547.001","Detect_Registry_Run_Persistence","rule Detect_Registry_Run_Persistence : trojan persistence
+{
+    meta:
+        description = ""Detects trojan adding itself to registry Run key for persistence at startup""
+        author      = ""Student Dataset""
+        date        = ""2026-01-13""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1547/001/""
+
+    strings:
+        // Registry autorun keys
+        $reg1 = ""SOFTWARE\Microsoft\Windows\CurrentVersion\Run""     wide ascii
+        $reg2 = ""SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"" wide ascii
+
+        // API to write registry value
+        $api1 = ""RegSetValueEx""  wide ascii
+        $api2 = ""RegOpenKeyEx""   wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        ($reg1 or $reg2) and
+        $api1 and $api2
+}","malicious","easy","manual"
+"12","Détecter un dropper PowerShell qui télécharge et exécute du code malveillant","technical_fr","fr","PowerShell Dropper","dropper","Command and Scripting Interpreter","T1059.001","Detect_PowerShell_Download_Cradle","rule Detect_PowerShell_Download_Cradle : dropper powershell
+{
+    meta:
+        description = ""Detects PowerShell download cradle executing remote payload""
+        author      = ""Student Dataset""
+        date        = ""2026-01-14""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1059/001/""
+
+    strings:
+        // PowerShell invocation
+        $ps1  = ""powershell""         nocase wide ascii
+        $ps2  = ""pwsh""               nocase wide ascii
+
+        // Download methods
+        $dl1  = ""DownloadString""     wide ascii
+        $dl2  = ""DownloadFile""       wide ascii
+        $dl3  = ""WebClient""          wide ascii
+
+        // Execute downloaded code
+        $exec1 = ""IEX""               wide ascii
+        $exec2 = ""Invoke-Expression"" nocase wide ascii
+
+        // Bypass execution policy
+        $bypass = ""-ExecutionPolicy Bypass"" nocase
+
+    condition:
+        filesize < 5MB and
+        ($ps1 or $ps2) and
+        ($dl1 or $dl2 or $dl3) and
+        ($exec1 or $exec2 or $bypass)
+}","malicious","medium","manual"
+"13","rule to detect rootkit that hooks SSDT to hide processes from the OS","technical","en","Generic Rootkit","rootkit","Hide Artifacts","T1564","Detect_Rootkit_SSDT_Hook","rule Detect_Rootkit_SSDT_Hook : rootkit kernel
+{
+    meta:
+        description = ""Detects kernel rootkit modifying SSDT to hide processes""
+        author      = ""Student Dataset""
+        date        = ""2026-01-14""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1564/""
+
+    strings:
+        // Physical memory access (ring-0 technique)
+        $mem   = ""\\.\PhysicalMemory""
+
+        // SSDT hooked function
+        $zwq   = ""ZwQuerySystemInformation"" wide ascii
+
+        // Inline hook NOP + JMP pattern
+        $hook  = { 90 90 90 E9 ?? ?? ?? ?? }
+
+        // Driver access to raw disk
+        $drive = ""\\.\PhysicalDrive0""
+
+        // Driver loading API
+        $load  = ""NtLoadDriver"" wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 1MB and
+        ($mem and $zwq) or
+        ($hook and ($drive or $load))
+}","malicious","hard","manual"
+"14","un ver réseau qui se copie sur les partages réseau Windows via SMB","informal_fr","fr","Network Worm","worm","Lateral Movement","T1021","Detect_Network_Worm_SMB","rule Detect_Network_Worm_SMB : worm lateral_movement
+{
+    meta:
+        description = ""Detects worm spreading via SMB network shares""
+        author      = ""Student Dataset""
+        date        = ""2026-01-14""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1021/""
+
+    strings:
+        // File copy API
+        $copy  = ""CopyFileA"" wide ascii
+
+        // SMB share path pattern
+        $net1  = /\\[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.+/
+
+        // Net command to map drive
+        $net2  = ""net use"" nocase
+
+        // IPC share for admin access
+        $ipc   = ""IPC$""
+
+        // Admin share
+        $admin = ""ADMIN$""
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        $copy and
+        ($net1 or $net2) and
+        ($ipc or $admin)
+}","malicious","medium","manual"
+"15","detect spyware taking screenshots and uploading them to remote FTP server","technical","en","Screenshot Spyware","spyware","Screen Capture","T1113","Detect_Screenshot_Spyware","rule Detect_Screenshot_Spyware : spyware screen_capture
+{
+    meta:
+        description = ""Detects spyware capturing screenshots and uploading via FTP""
+        author      = ""Student Dataset""
+        date        = ""2026-01-14""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1113/""
+
+    strings:
+        // GDI screenshot API chain
+        $api1 = ""BitBlt""                  wide ascii
+        $api2 = ""GetDesktopWindow""        wide ascii
+        $api3 = ""CreateCompatibleBitmap""  wide ascii
+        $api4 = ""CreateCompatibleDC""      wide ascii
+
+        // Upload channel
+        $ftp  = ""ftp""    nocase wide ascii
+        $send = ""WSASend"" wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 10MB and
+        3 of ($api1, $api2, $api3, $api4) and
+        ($ftp or $send)
+}","malicious","medium","manual"
+"16","Détecter un RAT qui ouvre un backdoor shell sur le port 4444","technical_fr","fr","Generic RAT","rat","Remote Access Software","T1219","Detect_RAT_Backdoor_Shell","rule Detect_RAT_Backdoor_Shell : rat backdoor
+{
+    meta:
+        description = ""Detects Remote Access Trojan opening reverse shell on port 4444""
+        author      = ""Student Dataset""
+        date        = ""2026-01-15""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1219/""
+
+    strings:
+        // Port 4444 in little-endian hex
+        $port   = { 5C 11 }
+
+        // Socket API calls
+        $bind   = ""bind""   wide ascii
+        $listen = ""listen"" wide ascii
+        $accept = ""accept"" wide ascii
+
+        // Shell execution
+        $shell  = ""cmd.exe""  wide ascii
+        $sh2    = ""/bin/sh""  wide ascii
+
+        // Netcat tool reference
+        $nc     = ""netcat"" nocase
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        $bind and $listen and $accept and
+        ($shell or $sh2 or $nc)
+}","malicious","medium","manual"
+"17","YARA rule to detect Mirai botnet malware targeting IoT devices via Telnet","technical","en","Mirai","botnet","Exploitation of Remote Services","T1210","Detect_Mirai_IoT_Botnet","rule Detect_Mirai_IoT_Botnet : botnet iot mirai
+{
+    meta:
+        description = ""Detects Mirai botnet IoT malware spreading via Telnet brute-force""
+        author      = ""Student Dataset""
+        date        = ""2026-01-15""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1210/""
+
+    strings:
+        // BusyBox environment (embedded Linux)
+        $busybox = ""/bin/busybox"" wide ascii
+
+        // Mirai string marker
+        $mirai   = ""MIRAI"" wide ascii
+
+        // Telnet brute-force marker
+        $telnet  = ""telnet"" nocase wide ascii
+
+        // Kill competing malware
+        $kill    = ""kill""   wide ascii
+
+        // Shell execution for persistence
+        $exec    = ""/bin/sh"" wide ascii
+
+        // Mirai table entry hex
+        $hex1    = { 4D 49 52 41 49 }
+
+    condition:
+        filesize < 500KB and
+        $busybox and
+        ($mirai or $hex1) and
+        $telnet and
+        $kill and
+        $exec
+}","malicious","hard","manual"
+"18","détecter XMRig, un crypto-mineur Monero qui utilise 100% du CPU","informal_fr","fr","XMRig","cryptominer","Resource Hijacking","T1496","Detect_XMRig_Monero_Miner","rule Detect_XMRig_Monero_Miner : cryptominer xmrig
+{
+    meta:
+        description = ""Detects XMRig Monero CPU miner binary and configuration""
+        author      = ""Student Dataset""
+        date        = ""2026-01-15""
+        severity    = ""medium""
+        reference   = ""https://attack.mitre.org/techniques/T1496/""
+
+    strings:
+        // XMRig binary name
+        $name1   = ""xmrig""            nocase wide ascii
+
+        // Monero coin reference
+        $coin    = ""monero""           nocase wide ascii
+
+        // Mining pool domains
+        $pool1   = ""pool.minexmr.com"" wide ascii
+        $pool2   = ""xmrpool.eu""       wide ascii
+
+        // XMRig donate address
+        $donate  = ""donate.xmrig.com"" wide ascii
+
+        // CPU usage flag
+        $cpuflag = ""--max-cpu-usage""  wide ascii
+
+    condition:
+        filesize < 20MB and
+        ($name1 or $donate) and
+        ($coin or $pool1 or $pool2 or $cpuflag)
+}","malicious","easy","manual"
+"19","detect malware using DLL side-loading by replacing a legitimate DLL","technical","en","DLL Sideload","trojan","DLL Side-Loading","T1574.002","Detect_DLL_Sideloading","rule Detect_DLL_Sideloading : trojan dll_sideload
+{
+    meta:
+        description = ""Detects malicious DLL impersonating a legitimate system DLL""
+        author      = ""Student Dataset""
+        date        = ""2026-01-16""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1574/002/""
+
+    strings:
+        // Common legitimate DLLs targeted for sideloading
+        $dll1 = ""version.dll""  nocase wide ascii
+        $dll2 = ""wininet.dll""  nocase wide ascii
+        $dll3 = ""cryptbase.dll"" nocase wide ascii
+
+        // LoadLibrary to load the malicious DLL
+        $load = ""LoadLibraryA"" wide ascii
+
+        // PE header magic
+        $mz   = { 4D 5A }
+
+        // Export of legitimate function to appear clean
+        $exp  = ""DllMain"" wide ascii
+
+    condition:
+        pe.is_pe and
+        $mz at 0 and
+        filesize < 500KB and
+        $load and
+        ($dll1 or $dll2 or $dll3) and
+        $exp
+}","malicious","hard","manual"
+"20","Détecter le cheval de Troie bancaire Zeus qui injecte dans les navigateurs","formal_fr","fr","Zeus","banker","Credentials from Web Browsers","T1555.003","Detect_Zeus_Banking_Trojan","rule Detect_Zeus_Banking_Trojan : banker trojan webinject
+{
+    meta:
+        description = ""Detects Zeus banking trojan web injection and form grabbing""
+        author      = ""Student Dataset""
+        date        = ""2026-01-16""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1555/003/""
+
+    strings:
+        // Zeus web inject markers
+        $inject1 = ""webinject"" nocase wide ascii
+        $inject2 = ""formgrab""  nocase wide ascii
+
+        // Target banking sites
+        $bank1   = ""paypal""          nocase wide ascii
+        $bank2   = ""bankofamerica""   nocase wide ascii
+        $bank3   = ""wellsfargo""      nocase wide ascii
+
+        // HTTP hook API for intercepting browser traffic
+        $hook    = ""HttpSendRequest"" wide ascii
+
+        // Zeus config file marker
+        $cfg     = ""zeus_config""     nocase
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        ($inject1 or $inject2 or $cfg) and
+        ($bank1 or $bank2 or $bank3) and
+        $hook
+}","malicious","hard","manual"
+"21","detect ransomware that deletes Volume Shadow Copies to prevent file recovery","technical","en","Shadow Deleter","ransomware","Inhibit System Recovery","T1490","Detect_ShadowCopy_Deletion","rule Detect_ShadowCopy_Deletion : ransomware recovery_inhibit
+{
+    meta:
+        description = ""Detects ransomware deleting VSS shadow copies to prevent recovery""
+        author      = ""Student Dataset""
+        date        = ""2026-01-16""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1490/""
+
+    strings:
+        // vssadmin delete command
+        $vss1 = ""vssadmin delete shadows /all /quiet"" nocase wide ascii
+
+        // WMIC shadow copy delete
+        $vss2 = ""wmic shadowcopy delete""              nocase wide ascii
+
+        // Disable boot recovery
+        $vss3 = ""bcdedit /set {default} recoveryenabled no"" nocase wide ascii
+
+        // Disable automatic repair
+        $vss4 = ""wbadmin delete catalog -quiet""       nocase wide ascii
+
+    condition:
+        filesize < 10MB and
+        any of them
+}","malicious","medium","manual"
+"22","Détecter un spyware qui accède aux SMS et contacts sur Android","technical_fr","fr","Android Spyware","spyware","Data from Local System","T1005","Detect_Android_SMS_Spyware","rule Detect_Android_SMS_Spyware : spyware android mobile
+{
+    meta:
+        description = ""Detects Android spyware accessing SMS, contacts and GPS location""
+        author      = ""Student Dataset""
+        date        = ""2026-01-16""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1005/""
+
+    strings:
+        // Android permissions in manifest
+        $perm1 = ""READ_CONTACTS""       wide ascii
+        $perm2 = ""READ_SMS""            wide ascii
+        $perm3 = ""ACCESS_FINE_LOCATION"" wide ascii
+        $perm4 = ""READ_CALL_LOG""       wide ascii
+
+        // Exfiltration method
+        $upload = ""uploadData""    wide ascii
+        $http   = ""HttpPost""      wide ascii
+
+        // Background service for stealth
+        $svc    = ""BackgroundService"" wide ascii
+
+    condition:
+        filesize < 20MB and
+        3 of ($perm1, $perm2, $perm3, $perm4) and
+        ($upload or $http) and
+        $svc
+}","malicious","medium","manual"
+"23","detect Mimikatz tool used to dump credentials from Windows LSASS process","technical","en","Mimikatz","credential_stealer","OS Credential Dumping","T1003.001","Detect_Mimikatz_Credential_Dump","rule Detect_Mimikatz_Credential_Dump : credential_stealer mimikatz
+{
+    meta:
+        description = ""Detects Mimikatz credential dumping tool variants""
+        author      = ""Student Dataset""
+        date        = ""2026-01-17""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1003/001/""
+
+    strings:
+        // Mimikatz binary name
+        $name1   = ""mimikatz""                   nocase wide ascii
+
+        // Mimikatz module names
+        $mod1    = ""sekurlsa""                   nocase wide ascii
+        $mod2    = ""lsadump""                    nocase wide ascii
+
+        // LSASS process target
+        $lsass   = ""lsass""                      nocase wide ascii
+
+        // Mimikatz commands
+        $cmd1    = ""privilege::debug""           nocase wide ascii
+        $cmd2    = ""sekurlsa::logonpasswords""   nocase wide ascii
+
+        // Hex signature from Mimikatz binary
+        $hex1    = { 6D 69 6D 69 6B 61 74 7A }
+
+    condition:
+        filesize < 50MB and
+        ($name1 or $hex1 or ($mod1 and $cmd2)) and
+        ($lsass or $cmd1)
+}","malicious","medium","manual"
+"24","detect Agent Tesla infostealer exfiltrating stolen data via SMTP email","technical","en","Agent Tesla","infostealer","Exfiltration Over Alternative Protocol","T1048.002","Detect_AgentTesla_SMTP_Exfil","rule Detect_AgentTesla_SMTP_Exfil : infostealer agenttesla smtp
+{
+    meta:
+        description = ""Detects Agent Tesla infostealer using SMTP to exfiltrate credentials""
+        author      = ""Student Dataset""
+        date        = ""2026-01-17""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1048/002/""
+
+    strings:
+        // Agent Tesla marker
+        $tesla  = ""AgentTesla""       nocase wide ascii
+
+        // SMTP exfiltration infrastructure
+        $smtp1  = ""smtp.gmail.com""   wide ascii
+        $smtp2  = ""smtp.mail.ru""     wide ascii
+        $smtp3  = ""MAIL FROM:""       wide ascii
+
+        // Keylogging API
+        $key    = ""GetAsyncKeyState"" wide ascii
+
+        // Clipboard stealing
+        $clip   = ""GetClipboardData"" wide ascii
+
+        // Browser credential path
+        $chrome = ""Google\Chrome\User Data"" wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 10MB and
+        ($tesla or ($smtp1 or $smtp2) and $smtp3) and
+        ($key or $clip or $chrome)
+}","malicious","hard","manual"
+"25","Détecter Cobalt Strike beacon utilisé par des groupes APT","technical_fr","fr","Cobalt Strike","apt_tool","Command and Control","T1071","Detect_CobaltStrike_Beacon","rule Detect_CobaltStrike_Beacon : apt_tool c2 cobaltstrike
+{
+    meta:
+        description = ""Detects Cobalt Strike beacon used by APT actors for C2""
+        author      = ""Student Dataset""
+        date        = ""2026-01-17""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1071/""
+
+    strings:
+        // Named pipe used by Cobalt Strike
+        $pipe    = ""\\.\pipe\msagent_"" wide ascii
+
+        // Cobalt Strike string artifacts
+        $cs1     = ""beacon""        nocase wide ascii
+        $cs2     = ""cobaltstrike""  nocase wide ascii
+
+        // Sleep obfuscation byte pattern
+        $sleep   = { 48 83 EC 20 B8 01 00 00 00 }
+
+        // CS default config XOR key bytes
+        $cfg     = { 69 68 69 68 69 6B }
+
+        // Staged payload HTTP request pattern
+        $http    = ""/submit.php"" wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 20MB and
+        ($pipe or $cs2 or $cs1) and
+        ($sleep or $cfg or $http)
+}","malicious","hard","manual"
+"26","identify legitimate Windows calculator application binary","technical","en","Windows Calc","benign","N/A","N/A","Benign_Windows_Calculator","rule Benign_Windows_Calculator : benign legitimate
+{
+    meta:
+        description = ""Identifies the legitimate Windows Calculator application""
+        author      = ""Student Dataset""
+        date        = ""2026-01-18""
+        severity    = ""none""
+        reference   = ""https://docs.microsoft.com/windows""
+
+    strings:
+        // Published by Microsoft
+        $pub   = ""Microsoft Corporation"" wide ascii
+
+        // Official description string
+        $desc  = ""Windows Calculator""    wide ascii
+
+        // Binary filename
+        $name  = ""calc.exe""              wide ascii
+
+        // Version info
+        $ver   = ""CalculatorApp""         wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        $pub and
+        ($desc or $name or $ver) and
+        not ""CryptEncrypt"" and
+        not ""CreateRemoteThread""
+}","benign","easy","manual"
+"27","règle pour identifier un fichier PDF normal sans JavaScript ni code malveillant","formal_fr","fr","Clean PDF","benign","N/A","N/A","Benign_Clean_PDF","rule Benign_Clean_PDF : benign document
+{
+    meta:
+        description = ""Identifies clean PDF document with no JavaScript or malicious content""
+        author      = ""Student Dataset""
+        date        = ""2026-01-18""
+        severity    = ""none""
+        reference   = ""https://www.adobe.com/devnet/pdf/pdf_reference.html""
+
+    strings:
+        // PDF magic header
+        $header  = ""%PDF-""     ascii
+
+        // PDF end of file marker
+        $eof     = ""%%EOF""     ascii
+
+        // Indicators of malicious PDF
+        $bad1    = ""/JavaScript"" ascii
+        $bad2    = ""/Launch""     ascii
+        $bad3    = ""/EmbeddedFile"" ascii
+        $bad4    = ""/OpenAction"" ascii
+
+    condition:
+        $header at 0 and
+        $eof and
+        not $bad1 and
+        not $bad2 and
+        not $bad3 and
+        not $bad4
+}","benign","easy","manual"
+"28","identify a normal JPEG image file with no hidden executable content","technical","en","Clean JPEG","benign","N/A","N/A","Benign_Clean_JPEG_Image","rule Benign_Clean_JPEG_Image : benign image
+{
+    meta:
+        description = ""Identifies a clean JPEG image with no embedded executable""
+        author      = ""Student Dataset""
+        date        = ""2026-01-18""
+        severity    = ""none""
+        reference   = ""https://www.iso.org/standard/18902.html""
+
+    strings:
+        // JPEG magic bytes
+        $jpg_start = { FF D8 FF }
+
+        // JPEG end marker
+        $jpg_end   = { FF D9 }
+
+        // PE executable magic (must not be present)
+        $pe_magic  = { 4D 5A }
+
+        // ELF magic (must not be present)
+        $elf_magic = { 7F 45 4C 46 }
+
+    condition:
+        $jpg_start at 0 and
+        $jpg_end and
+        not $pe_magic and
+        not $elf_magic
+}","benign","easy","manual"
+"29","fichier Word DOCX normal sans macros VBA ni code exécutable","formal_fr","fr","Clean DOCX","benign","N/A","N/A","Benign_Clean_Word_DOCX","rule Benign_Clean_Word_DOCX : benign document office
+{
+    meta:
+        description = ""Identifies a clean Word DOCX file without macros or executable code""
+        author      = ""Student Dataset""
+        date        = ""2026-01-18""
+        severity    = ""none""
+        reference   = ""https://docs.microsoft.com/office""
+
+    strings:
+        // DOCX main document entry
+        $docx    = ""word/document.xml"" wide ascii
+
+        // Indicators of malicious macros
+        $macro1  = ""vbaProject.bin""    wide ascii
+        $macro2  = ""AutoOpen""          wide ascii
+        $macro3  = ""Shell""             wide ascii
+        $macro4  = ""WScript.Shell""     wide ascii
+
+    condition:
+        $docx and
+        not $macro1 and
+        not $macro2 and
+        not $macro3 and
+        not $macro4
+}","benign","easy","manual"
+"30","identify legitimate SSL/TLS certificate PEM file for HTTPS","short_technical","en","SSL Certificate","benign","N/A","N/A","Benign_SSL_TLS_Certificate","rule Benign_SSL_TLS_Certificate : benign certificate
+{
+    meta:
+        description = ""Identifies a legitimate SSL/TLS certificate in PEM format""
+        author      = ""Student Dataset""
+        date        = ""2026-01-18""
+        severity    = ""none""
+        reference   = ""https://www.rfc-editor.org/rfc/rfc7468""
+
+    strings:
+        // PEM certificate header
+        $pem_start = ""-----BEGIN CERTIFICATE-----"" ascii
+
+        // PEM certificate footer
+        $pem_end   = ""-----END CERTIFICATE-----""   ascii
+
+        // Private key indicator (should not be here alone)
+        $priv_key  = ""-----BEGIN PRIVATE KEY-----"" ascii
+
+    condition:
+        $pem_start and
+        $pem_end and
+        filesize < 20KB and
+        not $priv_key
+}","benign","easy","manual"
+"31","detect malware communicating over DNS tunneling to exfiltrate data","technical","en","DNS Tunneler","trojan","Exfiltration Over Alternative Protocol","T1048","Detect_DNS_Tunneling_Exfil","rule Detect_DNS_Tunneling_Exfil : trojan exfiltration dns
+{
+    meta:
+        description = ""Detects DNS tunneling used to exfiltrate data over DNS queries""
+        author      = ""Student Dataset""
+        date        = ""2026-01-20""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1048/""
+
+    strings:
+        // DNS query API calls
+        $dns1 = ""DnsQuery""      wide ascii
+        $dns2 = ""gethostbyname"" wide ascii
+        $dns3 = ""DnsQueryEx""    wide ascii
+
+        // Long subdomain pattern used for tunneling (data encoded in subdomain)
+        $long_sub = /[a-zA-Z0-9]{30,}\.[a-z]{2,6}/
+
+        // Known DNS tunnel tool names
+        $iodine = ""iodine""   nocase wide ascii
+        $dnsx   = ""dnscat""   nocase wide ascii
+        $tool3  = ""dns2tcp""  nocase wide ascii
+
+    condition:
+        filesize < 10MB and
+        ($dns1 or $dns2 or $dns3) and
+        ($long_sub or $iodine or $dnsx or $tool3)
+}","malicious","hard","manual"
+"32","Détecter un malware avec des techniques anti-sandbox pour éviter l'analyse","technical_fr","fr","Anti-Sandbox","trojan","Virtualization/Sandbox Evasion","T1497","Detect_AntiSandbox_Evasion","rule Detect_AntiSandbox_Evasion : trojan evasion anti_analysis
+{
+    meta:
+        description = ""Detects anti-sandbox and anti-VM evasion techniques""
+        author      = ""Student Dataset""
+        date        = ""2026-01-20""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1497/""
+
+    strings:
+        // Virtual machine detection strings
+        $vm1   = ""VMware""       nocase wide ascii
+        $vm2   = ""VirtualBox""   nocase wide ascii
+        $vm3   = ""QEMU""         nocase wide ascii
+        $vm4   = ""Sandboxie""    nocase wide ascii
+
+        // Anti-debug API
+        $dbg1  = ""IsDebuggerPresent""         wide ascii
+        $dbg2  = ""CheckRemoteDebuggerPresent"" wide ascii
+
+        // Time-based evasion
+        $sleep = ""Sleep""          wide ascii
+        $tick  = ""GetTickCount""   wide ascii
+
+        // Mouse activity check (sandbox has no mouse)
+        $mouse = ""GetCursorPos""   wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 10MB and
+        ($vm1 or $vm2 or $vm3 or $vm4 or $dbg1 or $dbg2) and
+        ($sleep or $tick or $mouse)
+}","malicious","hard","manual"
+"33","detect MBR wiper malware that overwrites Master Boot Record to destroy system","technical","en","MBR Wiper","wiper","Disk Wipe","T1561.002","Detect_MBR_Wiper_Malware","rule Detect_MBR_Wiper_Malware : wiper destructive mbr
+{
+    meta:
+        description = ""Detects MBR wiper malware overwriting Master Boot Record""
+        author      = ""Student Dataset""
+        date        = ""2026-01-20""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1561/002/""
+
+    strings:
+        // Raw disk access via device path
+        $disk   = ""\\.\PhysicalDrive0"" wide ascii
+
+        // Write API to overwrite MBR
+        $write  = ""WriteFile""           wide ascii
+
+        // Device control for low-level disk operations
+        $ioctl  = ""DeviceIoControl""     wide ascii
+
+        // Zero-fill pattern (512 bytes overwrite signature)
+        $zeros  = { 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+                    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 }
+
+        // Known wiper marker strings
+        $wiper1 = ""Shamoon""  nocase
+        $wiper2 = ""Destover"" nocase
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        $disk and
+        ($write or $ioctl) and
+        ($zeros or $wiper1 or $wiper2)
+}","malicious","hard","manual"
+"34","Détecter un malware qui modifie le fichier hosts pour rediriger le trafic","informal_fr","fr","Hosts Modifier","trojan","Boot or Logon Autostart Execution","T1547","Detect_Hosts_File_Modification","rule Detect_Hosts_File_Modification : trojan redirect dns_hijack
+{
+    meta:
+        description = ""Detects malware modifying Windows hosts file to redirect traffic""
+        author      = ""Student Dataset""
+        date        = ""2026-01-21""
+        severity    = ""medium""
+        reference   = ""https://attack.mitre.org/techniques/T1547/""
+
+    strings:
+        // Windows hosts file path
+        $hosts1 = ""C:\Windows\System32\drivers\etc\hosts"" wide ascii
+        $hosts2 = ""\drivers\etc\hosts""                      wide ascii
+
+        // File write API
+        $write  = ""WriteFile"" wide ascii
+
+        // Redirect to loopback or null
+        $redir1 = ""127.0.0.1"" wide ascii
+        $redir2 = ""0.0.0.0""   wide ascii
+
+        // Example bank domain redirection
+        $bank   = ""paypal.com""    nocase wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        ($hosts1 or $hosts2) and
+        $write and
+        ($redir1 or $redir2)
+}","malicious","medium","manual"
+"35","detect dropper that extracts and runs embedded executable from its resources","technical","en","Resource Dropper","dropper","Obfuscated Files or Information","T1027.009","Detect_Resource_Dropper_PE","rule Detect_Resource_Dropper_PE : dropper embedded_payload
+{
+    meta:
+        description = ""Detects dropper extracting and executing embedded PE from resources""
+        author      = ""Student Dataset""
+        date        = ""2026-01-21""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1027/009/""
+
+    strings:
+        // Resource access API chain
+        $res1 = ""FindResource""    wide ascii
+        $res2 = ""LoadResource""    wide ascii
+        $res3 = ""LockResource""    wide ascii
+        $res4 = ""SizeofResource""  wide ascii
+
+        // Write extracted payload to disk
+        $write  = ""WriteFile""     wide ascii
+
+        // Execute dropped file
+        $exec1  = ""CreateProcess"" wide ascii
+        $exec2  = ""ShellExecute""  wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 20MB and
+        3 of ($res1, $res2, $res3, $res4) and
+        $write and
+        ($exec1 or $exec2)
+}","malicious","hard","manual"
+"36","Détecter un macro Word malveillant qui télécharge un payload via PowerShell","technical_fr","fr","Maldoc Word","maldoc","Phishing: Spearphishing Attachment","T1566.001","Detect_Maldoc_Word_Macro_Dropper","rule Detect_Maldoc_Word_Macro_Dropper : maldoc phishing macro
+{
+    meta:
+        description = ""Detects malicious Word document with macro that downloads payload""
+        author      = ""Student Dataset""
+        date        = ""2026-01-21""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1566/001/""
+
+    strings:
+        // VBA macro auto-execution triggers
+        $auto1  = ""AutoOpen""        wide ascii
+        $auto2  = ""Document_Open""   wide ascii
+
+        // Shell execution in macro
+        $shell1 = ""Shell""           wide ascii
+        $shell2 = ""WScript.Shell""   wide ascii
+
+        // PowerShell download cradle inside macro
+        $ps     = ""powershell""      nocase wide ascii
+        $dl     = ""DownloadFile""    wide ascii
+
+        // URL pattern in document
+        $url    = /https?:\/\/[a-zA-Z0-9.\/-]{10,}/
+
+    condition:
+        filesize < 10MB and
+        ($auto1 or $auto2) and
+        ($shell1 or $shell2) and
+        $ps and
+        ($dl or $url)
+}","malicious","medium","manual"
+"37","detect fileless malware using reflective DLL injection running only in memory","technical","en","Fileless Malware","apt_tool","Process Injection: Reflective DLL","T1055.001","Detect_Reflective_DLL_Injection","rule Detect_Reflective_DLL_Injection : apt_tool fileless injection
+{
+    meta:
+        description = ""Detects reflective DLL injection technique for fileless execution""
+        author      = ""Student Dataset""
+        date        = ""2026-01-22""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1055/001/""
+
+    strings:
+        // Reflective loader export name
+        $reflect1 = ""ReflectiveLoader"" wide ascii
+
+        // Reflective loader in hex
+        $reflect2 = { 52 65 66 6C 65 63 74 69 76 65 4C 6F 61 64 65 72 }
+
+        // Memory allocation for in-memory payload
+        $valloc   = ""VirtualAlloc""     wide ascii
+        $valloc2  = ""VirtualAllocEx""   wide ascii
+
+        // No-file write (used with in-memory execution)
+        $nof      = ""NtCreateSection""  wide ascii
+
+        // Function pointer call pattern (shellcode stub)
+        $stub     = { 55 8B EC 83 EC ?? 53 56 57 }
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        ($reflect1 or $reflect2) and
+        ($valloc or $valloc2 or $nof)
+}","malicious","hard","manual"
+"38","Détecter un malware qui utilise Tor pour anonymiser ses communications C2","technical_fr","fr","Tor C2","trojan","Proxy: Multi-hop Proxy","T1090.003","Detect_Tor_C2_Communication","rule Detect_Tor_C2_Communication : trojan tor proxy anonymization
+{
+    meta:
+        description = ""Detects malware routing C2 traffic through Tor network""
+        author      = ""Student Dataset""
+        date        = ""2026-01-22""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1090/003/""
+
+    strings:
+        // Tor hidden service domain
+        $onion   = "".onion""          wide ascii
+
+        // Tor SOCKS proxy default address
+        $socks   = ""127.0.0.1:9050"" wide ascii
+
+        // Tor reference strings
+        $tor1    = ""tor""             nocase wide ascii
+
+        // SOCKS5 protocol marker
+        $socks5  = ""SOCKS5""          wide ascii
+
+        // Tor browser/binary references
+        $tb      = ""tor.exe""         nocase wide ascii
+
+    condition:
+        filesize < 20MB and
+        ($onion or $socks) and
+        ($tor1 or $socks5 or $tb)
+}","malicious","hard","manual"
+"39","detect macro Excel file that launches PowerShell when workbook opens","technical","en","Excel Macro","maldoc","Phishing","T1566","Detect_Excel_Macro_PowerShell","rule Detect_Excel_Macro_PowerShell : maldoc excel macro powershell
+{
+    meta:
+        description = ""Detects malicious Excel macro launching PowerShell on workbook open""
+        author      = ""Student Dataset""
+        date        = ""2026-01-22""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1566/""
+
+    strings:
+        // Excel macro auto-open trigger
+        $wb_open  = ""Workbook_Open""        wide ascii
+        $auto     = ""Auto_Open""            wide ascii
+
+        // PowerShell invocation
+        $ps       = ""powershell""           nocase wide ascii
+
+        // Obfuscated PS flags
+        $enc      = ""-encodedcommand""      nocase wide ascii
+        $bypass   = ""-executionpolicy bypass"" nocase wide ascii
+        $nop      = ""-noprofile""           nocase wide ascii
+
+        // Download method
+        $dl       = ""DownloadString""       wide ascii
+
+    condition:
+        filesize < 5MB and
+        ($wb_open or $auto) and
+        $ps and
+        ($enc or $bypass or $nop or $dl)
+}","malicious","medium","manual"
+"40","Détecter un spyware qui active la webcam et le microphone à distance","formal_fr","fr","Camfecting Spyware","spyware","Audio Capture","T1123","Detect_Camfecting_Spyware","rule Detect_Camfecting_Spyware : spyware surveillance camera microphone
+{
+    meta:
+        description = ""Detects spyware silently activating camera and microphone""
+        author      = ""Student Dataset""
+        date        = ""2026-01-23""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1123/""
+
+    strings:
+        // Camera capture Windows API
+        $cam1   = ""capCreateCaptureWindow"" wide ascii
+        $cam2   = ""VideoCapture""           wide ascii
+        $cam3   = ""ICaptureGraphBuilder""   wide ascii
+
+        // Microphone/audio record API
+        $mic1   = ""waveInOpen""   wide ascii
+        $mic2   = ""AudioRecord""  wide ascii
+        $mic3   = ""mciSendString"" wide ascii
+
+        // Send captured data to remote server
+        $send   = ""send""         wide ascii
+        $upload = ""HttpSendRequest"" wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 10MB and
+        ($cam1 or $cam2 or $cam3) and
+        ($mic1 or $mic2 or $mic3) and
+        ($send or $upload)
+}","malicious","hard","manual"
+"41","detect Chrome password stealer accessing saved credentials SQLite database","technical","en","Chrome Stealer","infostealer","Credentials from Web Browsers","T1555.003","Detect_Chrome_Password_Stealer","rule Detect_Chrome_Password_Stealer : infostealer credential chrome
+{
+    meta:
+        description = ""Detects infostealer accessing Chrome saved passwords via SQLite""
+        author      = ""Student Dataset""
+        date        = ""2026-01-23""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1555/003/""
+
+    strings:
+        // Chrome user data path
+        $path1  = ""Google\Chrome\User Data""   wide ascii
+        $path2  = ""Login Data""                  wide ascii
+
+        // Windows DPAPI decryption (Chrome uses this to protect passwords)
+        $dpapi  = ""CryptUnprotectData""          wide ascii
+
+        // SQLite query to extract credentials
+        $sql    = ""SELECT * FROM logins""        wide ascii
+        $sql2   = ""origin_url""                  wide ascii
+
+        // Encryption key file
+        $key    = ""Local State""                 wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 10MB and
+        ($path1 or $path2) and
+        ($dpapi or $sql or $sql2) and
+        $key
+}","malicious","medium","manual"
+"42","Détecter un ransomware qui crée un mutex pour éviter une double infection","technical_fr","fr","Mutex Ransomware","ransomware","Data Encrypted for Impact","T1486","Detect_Ransomware_Mutex_Singleton","rule Detect_Ransomware_Mutex_Singleton : ransomware mutex
+{
+    meta:
+        description = ""Detects ransomware using mutex to ensure single instance execution""
+        author      = ""Student Dataset""
+        date        = ""2026-01-23""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1486/""
+
+    strings:
+        // Mutex creation API
+        $mutex_api = ""CreateMutexA""  wide ascii
+        $mutex_api2= ""CreateMutexW""  wide ascii
+
+        // Global namespace mutex prefix
+        $global    = ""Global\""      wide ascii
+
+        // Encryption API confirmation
+        $encrypt   = ""CryptEncrypt""  wide ascii
+
+        // Ransom note dropped after encryption
+        $note1     = ""README""        wide ascii
+        $note2     = ""HOW_TO_DECRYPT"" nocase wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        ($mutex_api or $mutex_api2) and
+        $global and
+        ($encrypt or $note1 or $note2)
+}","malicious","medium","manual"
+"43","detect port scanner malware performing network reconnaissance on LAN","technical","en","Port Scanner","trojan","Network Service Discovery","T1046","Detect_Port_Scanner_Recon","rule Detect_Port_Scanner_Recon : trojan reconnaissance port_scan
+{
+    meta:
+        description = ""Detects malicious port scanner performing LAN network reconnaissance""
+        author      = ""Student Dataset""
+        date        = ""2026-01-23""
+        severity    = ""medium""
+        reference   = ""https://attack.mitre.org/techniques/T1046/""
+
+    strings:
+        // Socket creation for port scanning
+        $sock    = ""socket""   wide ascii
+        $connect = ""connect""  wide ascii
+
+        // LAN IP range pattern
+        $lan1    = /192\.168\.[0-9]{1,3}\.[0-9]{1,3}/
+        $lan2    = /10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/
+
+        // Known scanner tool names
+        $scan1   = ""portscan""  nocase wide ascii
+        $scan2   = ""nmap""      nocase wide ascii
+        $scan3   = ""masscan""   nocase wide ascii
+
+        // Port range iteration pattern
+        $port_loop = { 66 83 ?? 01 66 3D ?? ?? }
+
+    condition:
+        pe.is_pe and
+        filesize < 10MB and
+        $sock and $connect and
+        ($lan1 or $lan2 or $scan1 or $scan2 or $scan3 or $port_loop)
+}","malicious","medium","manual"
+"44","Détecter un exploit EternalBlue qui attaque SMB pour se propager comme WannaCry","technical_fr","fr","EternalBlue","worm","Exploit Public-Facing Application","T1190","Detect_EternalBlue_SMB_Exploit","rule Detect_EternalBlue_SMB_Exploit : worm exploit smb eternalblue
+{
+    meta:
+        description = ""Detects EternalBlue SMB exploit used by WannaCry and NotPetya""
+        author      = ""Student Dataset""
+        date        = ""2026-01-24""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1190/""
+
+    strings:
+        // SMB protocol marker
+        $smb    = ""SMB""           wide ascii
+
+        // Named pipe for admin access
+        $pipe   = ""\IPC$""        wide ascii
+
+        // EternalBlue shellcode exploit header
+        $eb_hex = { FC E8 82 00 00 00 60 89 E5 31 C0 64 8B 50 30 }
+
+        // MS17-010 vulnerability target buffer
+        $ms17   = { 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+                    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 }
+
+        // DoublePulsar backdoor marker
+        $dp     = ""DoublePulsar""  nocase
+
+    condition:
+        filesize < 1MB and
+        $smb and
+        $pipe and
+        ($eb_hex or $ms17 or $dp)
+}","malicious","hard","manual"
+"45","detect ransomware that drops a ransom note named HELP_DECRYPT or README","short_technical","en","Ransom Note Dropper","ransomware","Data Encrypted for Impact","T1486","Detect_Ransomware_Note_Drop","rule Detect_Ransomware_Note_Drop : ransomware ransom_note
+{
+    meta:
+        description = ""Detects ransomware dropping common ransom note filenames""
+        author      = ""Student Dataset""
+        date        = ""2026-01-24""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1486/""
+
+    strings:
+        // Common ransom note filenames
+        $note1  = ""HELP_DECRYPT.txt""      nocase fullword
+        $note2  = ""README.txt""            nocase fullword
+        $note3  = ""HOW_TO_DECRYPT.txt""    nocase fullword
+        $note4  = ""YOUR_FILES_LOCKED.txt"" nocase fullword
+        $note5  = ""DECRYPT_INSTRUCTIONS""  nocase
+
+        // Bitcoin payment demand
+        $btc    = ""bitcoin""      nocase wide ascii
+        $wallet = ""BTC wallet""   nocase wide ascii
+        $tor    = "".onion""       wide ascii
+
+    condition:
+        filesize < 10MB and
+        any of ($note1, $note2, $note3, $note4, $note5) and
+        ($btc or $wallet or $tor)
+}","malicious","easy","manual"
+"46","identify a clean MP3 audio file with no hidden data or executable","informal","en","Clean MP3","benign","N/A","N/A","Benign_Clean_MP3_Audio","rule Benign_Clean_MP3_Audio : benign audio media
+{
+    meta:
+        description = ""Identifies a clean MP3 audio file with no embedded executable""
+        author      = ""Student Dataset""
+        date        = ""2026-01-24""
+        severity    = ""none""
+        reference   = ""https://www.iso.org/standard/22412.html""
+
+    strings:
+        // ID3 tag header (MP3 with metadata)
+        $id3    = { 49 44 33 }
+
+        // Raw MP3 frame sync bytes
+        $mp3    = { FF FB }
+
+        // PE magic (must not be present)
+        $pe     = { 4D 5A }
+
+        // ELF magic (must not be present)
+        $elf    = { 7F 45 4C 46 }
+
+    condition:
+        ($id3 at 0 or $mp3 at 0) and
+        not $pe and
+        not $elf and
+        filesize < 50MB
+}","benign","easy","manual"
+"47","fichier CSV contenant des données tabulaires sans code exécutable","informal_fr","fr","Clean CSV","benign","N/A","N/A","Benign_CSV_Data_File","rule Benign_CSV_Data_File : benign data tabular
+{
+    meta:
+        description = ""Identifies a benign CSV data file with no executable content""
+        author      = ""Student Dataset""
+        date        = ""2026-01-24""
+        severity    = ""none""
+        reference   = ""https://www.rfc-editor.org/rfc/rfc4180""
+
+    strings:
+        // PE executable (must not be present)
+        $pe        = { 4D 5A }
+
+        // PHP code (must not be present)
+        $php       = ""<?php"" ascii
+
+        // PowerShell (must not be present)
+        $ps        = ""powershell"" nocase ascii
+
+        // Shell command (must not be present)
+        $sh        = ""#!/bin"" ascii
+
+    condition:
+        not $pe at 0 and
+        not $php and
+        not $ps and
+        not $sh and
+        filesize < 100MB
+}","benign","easy","manual"
+"48","legitimate Windows system DLL signed by Microsoft","technical","en","Windows System DLL","benign","N/A","N/A","Benign_Windows_System_DLL","rule Benign_Windows_System_DLL : benign legitimate microsoft
+{
+    meta:
+        description = ""Identifies a legitimate signed Windows system DLL""
+        author      = ""Student Dataset""
+        date        = ""2026-01-25""
+        severity    = ""none""
+        reference   = ""https://docs.microsoft.com/windows/win32""
+
+    strings:
+        // Microsoft publisher string
+        $ms      = ""Microsoft Corporation""    wide ascii
+
+        // System32 path reference
+        $sys     = ""C:\Windows\System32""   wide ascii
+
+        // Digital signature marker
+        $sign    = ""Authenticode""             wide ascii
+
+        // Suspicious strings (must not be present)
+        $bad1    = ""CreateRemoteThread""       wide ascii
+        $bad2    = ""VirtualAllocEx""           wide ascii
+
+    condition:
+        pe.is_pe and
+        $ms and
+        ($sys or $sign) and
+        not $bad1 and
+        not $bad2 and
+        filesize < 50MB
+}","benign","easy","manual"
+"49","fichier de configuration JSON valide sans instructions suspectes","technical_fr","fr","Clean JSON Config","benign","N/A","N/A","Benign_Clean_JSON_Config","rule Benign_Clean_JSON_Config : benign configuration json
+{
+    meta:
+        description = ""Identifies a clean JSON configuration file without malicious content""
+        author      = ""Student Dataset""
+        date        = ""2026-01-25""
+        severity    = ""none""
+        reference   = ""https://www.rfc-editor.org/rfc/rfc8259""
+
+    strings:
+        // JSON structure markers
+        $obj    = ""{""    ascii
+        $arr    = ""[""    ascii
+
+        // Dangerous base64 blobs (must not appear)
+        $b64    = /[A-Za-z0-9+\/]{100,}={0,2}/
+
+        // No embedded PE
+        $pe     = { 4D 5A }
+
+        // No powershell command
+        $ps     = ""powershell"" nocase
+
+    condition:
+        ($obj at 0 or $arr at 0) and
+        not $b64 and
+        not $pe and
+        not $ps and
+        filesize < 10MB
+}","benign","easy","manual"
+"50","detect ransomware using AES-256 encryption with hardcoded key in binary","technical","en","AES Ransomware","ransomware","Data Encrypted for Impact","T1486","Detect_AES256_Ransomware_Hardcoded","rule Detect_AES256_Ransomware_Hardcoded : ransomware aes encryption
+{
+    meta:
+        description = ""Detects ransomware implementing AES-256 with hardcoded key material""
+        author      = ""Student Dataset""
+        date        = ""2026-01-25""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1486/""
+
+    strings:
+        // AES string references
+        $aes1   = ""AES""              wide ascii
+        $aes2   = ""AES-256""          wide ascii
+        $aes3   = ""AES_set_encrypt_key"" wide ascii
+
+        // Windows BCrypt AES provider
+        $bcrypt = ""Microsoft Primitive Provider"" wide ascii
+        $alg    = ""AES\0""           wide ascii
+
+        // Hardcoded 32-byte key pattern (example structure)
+        $key_pattern = { ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ??
+                         ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? }
+
+        // Encrypted file extension drop
+        $ext1   = "".enc""   fullword
+        $ext2   = "".aes""   fullword
+        $ext3   = "".crypt"" fullword
+
+    condition:
+        pe.is_pe and
+        filesize < 10MB and
+        ($aes1 or $aes2 or $aes3 or $bcrypt) and
+        any of ($ext1, $ext2, $ext3) and
+        $key_pattern
+}","malicious","hard","manual"
+"51","Build a YARA signature that flags a ransomware that encrypts files using cryptencrypt api","short_technical","en","WannaCry","ransomware","Data Encrypted for Impact","T1486","Detect_WannaCry_CryptEncrypt","rule Detect_WannaCry_CryptEncrypt : ransomware encryption
+{
+    meta:
+        description = ""Detects WannaCry ransomware via CryptEncrypt API and .WNCRY extension""
+        author      = ""Student Dataset""
+        date        = ""2026-01-10""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1486/""
+
+    strings:
+        // Windows crypto API used for file encryption
+        $api1 = ""CryptEncrypt""
+        $api2 = ""CryptAcquireContext"" nocase
+
+        // WannaCry specific file extension
+        $ext  = "".WNCRY"" fullword
+
+        // Ransom note filename
+        $note = ""@Please_Read_Me@.txt"" fullword
+
+        // WannaCry string marker
+        $mark = ""WannaCry"" nocase
+
+    condition:
+        pe.is_pe and
+        filesize < 10MB and
+        $api1 and
+        ($ext or $note or $mark)
+}","malicious","easy","synthetic_paraphrase"
+"52","Générer une signature YARA pour un ransomware lockbit qui renomme les fichiers avec l'extension .locked","short_fr","fr","LockBit","ransomware","Data Encrypted for Impact","T1486","Detect_LockBit_Extension","rule Detect_LockBit_Extension : ransomware lockbit
+{
+    meta:
+        description = ""Detects LockBit ransomware via .locked extension and ransom note""
+        author      = ""Student Dataset""
+        date        = ""2026-01-10""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1486/""
+
+    strings:
+        // LockBit file extensions
+        $ext1 = "".locked""  fullword
+        $ext2 = "".lockbit"" fullword
+
+        // LockBit ransom note
+        $note = ""LockBit_Readme.txt"" fullword
+
+        // LockBit string in binary
+        $id   = ""LockBit"" nocase
+
+        // Hex pattern found in LockBit samples
+        $hex1 = { 4C 6F 63 6B 42 69 74 }
+
+    condition:
+        filesize < 5MB and
+        ($ext1 or $ext2 or $note) and
+        ($id or $hex1)
+}","malicious","easy","synthetic_paraphrase"
+"53","Create a detection rule for i need a rule to catch malware that downloads files from internet and hides itself","short_technical","en","Generic Downloader","trojan","Ingress Tool Transfer","T1105","Detect_Generic_Downloader","rule Detect_Generic_Downloader : trojan downloader
+{
+    meta:
+        description = ""Detects generic downloader trojan using URLDownloadToFile and file hiding""
+        author      = ""Student Dataset""
+        date        = ""2026-01-11""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1105/""
+
+    strings:
+        // URL patterns for download
+        $url1 = ""http://""  wide ascii
+        $url2 = ""https://"" wide ascii
+
+        // Windows API for downloading files
+        $dl   = ""URLDownloadToFile"" wide ascii
+
+        // API to hide downloaded file
+        $hide = ""SetFileAttributesA""
+
+        // Common hidden attribute value
+        $attr = { 02 00 00 00 }
+
+    condition:
+        pe.is_pe and
+        filesize < 2MB and
+        ($url1 or $url2) and
+        $dl and
+        $hide
+}","malicious","medium","synthetic_paraphrase"
+"54","Construire une règle pour trouver détecter un keylogger capturant les frappes clavier","short_fr","fr","Generic Keylogger","spyware","Input Capture: Keylogging","T1056.001","Detect_Keylogger_API","rule Detect_Keylogger_API : spyware keylogger
+{
+    meta:
+        description = ""Detects keylogger using Windows hook API to capture keystrokes""
+        author      = ""Student Dataset""
+        date        = ""2026-01-11""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1056/001/""
+
+    strings:
+        // Windows global keyboard hook
+        $api1 = ""SetWindowsHookEx""  wide ascii
+        $api2 = ""GetAsyncKeyState""  wide ascii
+        $api3 = ""GetKeyboardState""  wide ascii
+
+        // Log file name pattern
+        $log1 = ""keylog"" nocase
+        $log2 = ""keystroke"" nocase
+
+        // Hex opcode for hook callback pattern
+        $hex1 = { 55 8B EC 83 EC ?? 53 56 57 }
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        (2 of ($api1, $api2, $api3)) and
+        ($log1 or $log2 or $hex1)
+}","malicious","medium","synthetic_paraphrase"
+"55","Create a detection rule for pe file that injects code into other processes using createremotethread","short_technical","en","Injector","trojan","Process Injection","T1055","Detect_Process_Injection_CRT","rule Detect_Process_Injection_CRT : trojan injection
+{
+    meta:
+        description = ""Detects classic process injection via CreateRemoteThread technique""
+        author      = ""Student Dataset""
+        date        = ""2026-01-11""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1055/""
+
+    strings:
+        // Classic injection API chain
+        $api1 = ""CreateRemoteThread"" wide ascii
+        $api2 = ""VirtualAllocEx""     wide ascii
+        $api3 = ""WriteProcessMemory"" wide ascii
+        $api4 = ""OpenProcess""        wide ascii
+
+        // LoadLibrary for DLL injection variant
+        $api5 = ""LoadLibraryA""       wide ascii
+
+        // PE magic bytes
+        $mz   = { 4D 5A }
+
+    condition:
+        pe.is_pe and
+        filesize < 20MB and
+        $mz at 0 and
+        3 of ($api1, $api2, $api3, $api4) and
+        $api5
+}","malicious","hard","synthetic_paraphrase"
+"56","Écrire une règle qui détecte un virus qui se propage via clé usb via autorun.inf","short_fr","fr","USB Worm","worm","Replication Through Removable Media","T1091","Detect_USB_Worm_Autorun","rule Detect_USB_Worm_Autorun : worm usb autorun
+{
+    meta:
+        description = ""Detects USB worm using autorun.inf to spread via removable media""
+        author      = ""Student Dataset""
+        date        = ""2026-01-12""
+        severity    = ""medium""
+        reference   = ""https://attack.mitre.org/techniques/T1091/""
+
+    strings:
+        // Autorun configuration file
+        $autorun = ""autorun.inf"" nocase
+
+        // Autorun open command
+        $open    = ""open=""
+
+        // Shell command override
+        $shell   = ""shell\open\command"" nocase
+
+        // Self-copy pattern
+        $copy    = ""CopyFileA"" wide ascii
+
+    condition:
+        filesize < 1MB and
+        $autorun and
+        ($open or $shell) and
+        $copy
+}","malicious","easy","synthetic_paraphrase"
+"57","Create a detection rule for malware using base64 encoding to hide payload and decode it at runtime","short_technical","en","Obfuscated Malware","trojan","Obfuscated Files or Information","T1027","Detect_Base64_Obfuscation","rule Detect_Base64_Obfuscation : trojan obfuscation
+{
+    meta:
+        description = ""Detects base64-encoded payload decoded and executed at runtime""
+        author      = ""Student Dataset""
+        date        = ""2026-01-12""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1027/""
+
+    strings:
+        // Long base64 string pattern
+        $b64   = /[A-Za-z0-9+\/]{60,}={0,2}/
+
+        // Windows crypto decode API
+        $decode1 = ""CryptStringToBinary"" wide ascii
+
+        // PowerShell decode function
+        $decode2 = ""FromBase64String""    wide ascii
+
+        // Python decode pattern
+        $decode3 = ""b64decode""           wide ascii
+
+    condition:
+        filesize < 10MB and
+        $b64 and
+        ($decode1 or $decode2 or $decode3)
+}","malicious","medium","synthetic_paraphrase"
+"58","Écrire une règle qui détecte un malware qui désactive windows defender pour rester invisible","short_fr","fr","Defender Killer","trojan","Impair Defenses","T1562.001","Detect_Disable_Windows_Defender","rule Detect_Disable_Windows_Defender : trojan defense_evasion
+{
+    meta:
+        description = ""Detects attempt to disable Windows Defender real-time protection""
+        author      = ""Student Dataset""
+        date        = ""2026-01-12""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1562/001/""
+
+    strings:
+        // PowerShell command to disable Defender
+        $cmd1 = ""Set-MpPreference -DisableRealtimeMonitoring"" nocase wide ascii
+
+        // Service stop command
+        $cmd2 = ""sc stop WinDefend"" nocase
+
+        // Registry key to disable
+        $reg1 = ""DisableAntiSpyware""
+
+        // Defender registry path
+        $reg2 = ""Windows Defender\Real-Time Protection"" nocase
+
+    condition:
+        filesize < 5MB and
+        any of them
+}","malicious","medium","synthetic_paraphrase"
+"59","Write a YARA rule to detect emotet banking trojan c2 communication","short_technical","en","Emotet","banker","Command and Control","T1071","Detect_Emotet_C2","rule Detect_Emotet_C2 : banker trojan c2
+{
+    meta:
+        description = ""Detects Emotet banking trojan C2 communication and mutex artifacts""
+        author      = ""Student Dataset""
+        date        = ""2026-01-13""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1071/""
+
+    strings:
+        // Emotet mutex pattern
+        $mutex = ""Global\Emotet"" nocase
+
+        // PDB debug string
+        $pdb   = ""emotet"" nocase
+
+        // Fake browser user-agent used by Emotet
+        $ua    = ""Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.1)"" wide ascii
+
+        // Network API for C2 contact
+        $inet  = ""InternetOpenUrl"" wide ascii
+
+        // Emotet hex signature
+        $hex1  = { 8B 45 FC 83 C0 01 89 45 FC 8B 45 FC 3B 45 F4 }
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        ($mutex or $pdb) and
+        ($ua or $inet or $hex1)
+}","malicious","hard","synthetic_paraphrase"
+"60","Je veux détecter un ransomware double extorsion qui exfiltre avant de chiffrer les données","short_fr","fr","BlackCat","ransomware","Exfiltration Over C2 Channel","T1041","Detect_DoubleExtortion_Ransomware","rule Detect_DoubleExtortion_Ransomware : ransomware exfiltration
+{
+    meta:
+        description = ""Detects double extortion ransomware: exfiltrates then encrypts""
+        author      = ""Student Dataset""
+        date        = ""2026-01-13""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1041/""
+
+    strings:
+        // Exfiltration tools
+        $exfil1 = ""curl.exe""   nocase wide ascii
+        $exfil2 = ""rclone.exe"" nocase wide ascii
+
+        // Compression before exfil
+        $compress = ""7z.exe""   nocase wide ascii
+
+        // Encryption API
+        $encrypt  = ""CryptEncrypt"" wide ascii
+
+        // Ransom note markers
+        $note1 = ""YOUR FILES ARE ENCRYPTED""   nocase
+        $note2 = ""double extortion""           nocase
+        $note3 = ""visit our dark web""         nocase
+
+    condition:
+        pe.is_pe and
+        filesize < 20MB and
+        ($exfil1 or $exfil2 or $compress) and
+        $encrypt and
+        any of ($note1, $note2, $note3)
+}","malicious","hard","synthetic_paraphrase"
+"61","Find any PE file that trojan modifying windows registry run key for startup persistence","short_technical","en","Generic Trojan","trojan","Registry Run Keys","T1547.001","Detect_Registry_Run_Persistence","rule Detect_Registry_Run_Persistence : trojan persistence
+{
+    meta:
+        description = ""Detects trojan adding itself to registry Run key for persistence at startup""
+        author      = ""Student Dataset""
+        date        = ""2026-01-13""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1547/001/""
+
+    strings:
+        // Registry autorun keys
+        $reg1 = ""SOFTWARE\Microsoft\Windows\CurrentVersion\Run""     wide ascii
+        $reg2 = ""SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"" wide ascii
+
+        // API to write registry value
+        $api1 = ""RegSetValueEx""  wide ascii
+        $api2 = ""RegOpenKeyEx""   wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        ($reg1 or $reg2) and
+        $api1 and $api2
+}","malicious","easy","synthetic_paraphrase"
+"62","Générer une signature YARA pour un dropper powershell qui télécharge et exécute du code malveillant","short_fr","fr","PowerShell Dropper","dropper","Command and Scripting Interpreter","T1059.001","Detect_PowerShell_Download_Cradle","rule Detect_PowerShell_Download_Cradle : dropper powershell
+{
+    meta:
+        description = ""Detects PowerShell download cradle executing remote payload""
+        author      = ""Student Dataset""
+        date        = ""2026-01-14""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1059/001/""
+
+    strings:
+        // PowerShell invocation
+        $ps1  = ""powershell""         nocase wide ascii
+        $ps2  = ""pwsh""               nocase wide ascii
+
+        // Download methods
+        $dl1  = ""DownloadString""     wide ascii
+        $dl2  = ""DownloadFile""       wide ascii
+        $dl3  = ""WebClient""          wide ascii
+
+        // Execute downloaded code
+        $exec1 = ""IEX""               wide ascii
+        $exec2 = ""Invoke-Expression"" nocase wide ascii
+
+        // Bypass execution policy
+        $bypass = ""-ExecutionPolicy Bypass"" nocase
+
+    condition:
+        filesize < 5MB and
+        ($ps1 or $ps2) and
+        ($dl1 or $dl2 or $dl3) and
+        ($exec1 or $exec2 or $bypass)
+}","malicious","medium","synthetic_paraphrase"
+"63","Generate a detection for rootkit that hooks ssdt to hide processes from the os","short_technical","en","Generic Rootkit","rootkit","Hide Artifacts","T1564","Detect_Rootkit_SSDT_Hook","rule Detect_Rootkit_SSDT_Hook : rootkit kernel
+{
+    meta:
+        description = ""Detects kernel rootkit modifying SSDT to hide processes""
+        author      = ""Student Dataset""
+        date        = ""2026-01-14""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1564/""
+
+    strings:
+        // Physical memory access (ring-0 technique)
+        $mem   = ""\\.\PhysicalMemory""
+
+        // SSDT hooked function
+        $zwq   = ""ZwQuerySystemInformation"" wide ascii
+
+        // Inline hook NOP + JMP pattern
+        $hook  = { 90 90 90 E9 ?? ?? ?? ?? }
+
+        // Driver access to raw disk
+        $drive = ""\\.\PhysicalDrive0""
+
+        // Driver loading API
+        $load  = ""NtLoadDriver"" wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 1MB and
+        ($mem and $zwq) or
+        ($hook and ($drive or $load))
+}","malicious","hard","synthetic_paraphrase"
+"64","Identifier les fichiers qui un ver réseau qui se copie sur les partages réseau windows via smb","short_fr","fr","Network Worm","worm","Lateral Movement","T1021","Detect_Network_Worm_SMB","rule Detect_Network_Worm_SMB : worm lateral_movement
+{
+    meta:
+        description = ""Detects worm spreading via SMB network shares""
+        author      = ""Student Dataset""
+        date        = ""2026-01-14""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1021/""
+
+    strings:
+        // File copy API
+        $copy  = ""CopyFileA"" wide ascii
+
+        // SMB share path pattern
+        $net1  = /\\[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.+/
+
+        // Net command to map drive
+        $net2  = ""net use"" nocase
+
+        // IPC share for admin access
+        $ipc   = ""IPC$""
+
+        // Admin share
+        $admin = ""ADMIN$""
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        $copy and
+        ($net1 or $net2) and
+        ($ipc or $admin)
+}","malicious","medium","synthetic_paraphrase"
+"65","Find any PE file that spyware taking screenshots and uploading them to remote ftp server","short_technical","en","Screenshot Spyware","spyware","Screen Capture","T1113","Detect_Screenshot_Spyware","rule Detect_Screenshot_Spyware : spyware screen_capture
+{
+    meta:
+        description = ""Detects spyware capturing screenshots and uploading via FTP""
+        author      = ""Student Dataset""
+        date        = ""2026-01-14""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1113/""
+
+    strings:
+        // GDI screenshot API chain
+        $api1 = ""BitBlt""                  wide ascii
+        $api2 = ""GetDesktopWindow""        wide ascii
+        $api3 = ""CreateCompatibleBitmap""  wide ascii
+        $api4 = ""CreateCompatibleDC""      wide ascii
+
+        // Upload channel
+        $ftp  = ""ftp""    nocase wide ascii
+        $send = ""WSASend"" wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 10MB and
+        3 of ($api1, $api2, $api3, $api4) and
+        ($ftp or $send)
+}","malicious","medium","synthetic_paraphrase"
+"66","Construire une règle pour trouver un rat qui ouvre un backdoor shell sur le port 4444","short_fr","fr","Generic RAT","rat","Remote Access Software","T1219","Detect_RAT_Backdoor_Shell","rule Detect_RAT_Backdoor_Shell : rat backdoor
+{
+    meta:
+        description = ""Detects Remote Access Trojan opening reverse shell on port 4444""
+        author      = ""Student Dataset""
+        date        = ""2026-01-15""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1219/""
+
+    strings:
+        // Port 4444 in little-endian hex
+        $port   = { 5C 11 }
+
+        // Socket API calls
+        $bind   = ""bind""   wide ascii
+        $listen = ""listen"" wide ascii
+        $accept = ""accept"" wide ascii
+
+        // Shell execution
+        $shell  = ""cmd.exe""  wide ascii
+        $sh2    = ""/bin/sh""  wide ascii
+
+        // Netcat tool reference
+        $nc     = ""netcat"" nocase
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        $bind and $listen and $accept and
+        ($shell or $sh2 or $nc)
+}","malicious","medium","synthetic_paraphrase"
+"67","Write a YARA rule to mirai botnet malware targeting iot devices via telnet","short_technical","en","Mirai","botnet","Exploitation of Remote Services","T1210","Detect_Mirai_IoT_Botnet","rule Detect_Mirai_IoT_Botnet : botnet iot mirai
+{
+    meta:
+        description = ""Detects Mirai botnet IoT malware spreading via Telnet brute-force""
+        author      = ""Student Dataset""
+        date        = ""2026-01-15""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1210/""
+
+    strings:
+        // BusyBox environment (embedded Linux)
+        $busybox = ""/bin/busybox"" wide ascii
+
+        // Mirai string marker
+        $mirai   = ""MIRAI"" wide ascii
+
+        // Telnet brute-force marker
+        $telnet  = ""telnet"" nocase wide ascii
+
+        // Kill competing malware
+        $kill    = ""kill""   wide ascii
+
+        // Shell execution for persistence
+        $exec    = ""/bin/sh"" wide ascii
+
+        // Mirai table entry hex
+        $hex1    = { 4D 49 52 41 49 }
+
+    condition:
+        filesize < 500KB and
+        $busybox and
+        ($mirai or $hex1) and
+        $telnet and
+        $kill and
+        $exec
+}","malicious","hard","synthetic_paraphrase"
+"68","Construire une règle pour trouver xmrig, un crypto-mineur monero qui utilise 100% du cpu","short_fr","fr","XMRig","cryptominer","Resource Hijacking","T1496","Detect_XMRig_Monero_Miner","rule Detect_XMRig_Monero_Miner : cryptominer xmrig
+{
+    meta:
+        description = ""Detects XMRig Monero CPU miner binary and configuration""
+        author      = ""Student Dataset""
+        date        = ""2026-01-15""
+        severity    = ""medium""
+        reference   = ""https://attack.mitre.org/techniques/T1496/""
+
+    strings:
+        // XMRig binary name
+        $name1   = ""xmrig""            nocase wide ascii
+
+        // Monero coin reference
+        $coin    = ""monero""           nocase wide ascii
+
+        // Mining pool domains
+        $pool1   = ""pool.minexmr.com"" wide ascii
+        $pool2   = ""xmrpool.eu""       wide ascii
+
+        // XMRig donate address
+        $donate  = ""donate.xmrig.com"" wide ascii
+
+        // CPU usage flag
+        $cpuflag = ""--max-cpu-usage""  wide ascii
+
+    condition:
+        filesize < 20MB and
+        ($name1 or $donate) and
+        ($coin or $pool1 or $pool2 or $cpuflag)
+}","malicious","easy","synthetic_paraphrase"
+"69","Build a YARA signature that flags malware using dll side-loading by replacing a legitimate dll","short_technical","en","DLL Sideload","trojan","DLL Side-Loading","T1574.002","Detect_DLL_Sideloading","rule Detect_DLL_Sideloading : trojan dll_sideload
+{
+    meta:
+        description = ""Detects malicious DLL impersonating a legitimate system DLL""
+        author      = ""Student Dataset""
+        date        = ""2026-01-16""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1574/002/""
+
+    strings:
+        // Common legitimate DLLs targeted for sideloading
+        $dll1 = ""version.dll""  nocase wide ascii
+        $dll2 = ""wininet.dll""  nocase wide ascii
+        $dll3 = ""cryptbase.dll"" nocase wide ascii
+
+        // LoadLibrary to load the malicious DLL
+        $load = ""LoadLibraryA"" wide ascii
+
+        // PE header magic
+        $mz   = { 4D 5A }
+
+        // Export of legitimate function to appear clean
+        $exp  = ""DllMain"" wide ascii
+
+    condition:
+        pe.is_pe and
+        $mz at 0 and
+        filesize < 500KB and
+        $load and
+        ($dll1 or $dll2 or $dll3) and
+        $exp
+}","malicious","hard","synthetic_paraphrase"
+"70","Écrire une règle qui détecte le cheval de troie bancaire zeus qui injecte dans les navigateurs","short_fr","fr","Zeus","banker","Credentials from Web Browsers","T1555.003","Detect_Zeus_Banking_Trojan","rule Detect_Zeus_Banking_Trojan : banker trojan webinject
+{
+    meta:
+        description = ""Detects Zeus banking trojan web injection and form grabbing""
+        author      = ""Student Dataset""
+        date        = ""2026-01-16""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1555/003/""
+
+    strings:
+        // Zeus web inject markers
+        $inject1 = ""webinject"" nocase wide ascii
+        $inject2 = ""formgrab""  nocase wide ascii
+
+        // Target banking sites
+        $bank1   = ""paypal""          nocase wide ascii
+        $bank2   = ""bankofamerica""   nocase wide ascii
+        $bank3   = ""wellsfargo""      nocase wide ascii
+
+        // HTTP hook API for intercepting browser traffic
+        $hook    = ""HttpSendRequest"" wide ascii
+
+        // Zeus config file marker
+        $cfg     = ""zeus_config""     nocase
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        ($inject1 or $inject2 or $cfg) and
+        ($bank1 or $bank2 or $bank3) and
+        $hook
+}","malicious","hard","synthetic_paraphrase"
+"71","Build a YARA signature that flags ransomware that deletes volume shadow copies to prevent file recovery","short_technical","en","Shadow Deleter","ransomware","Inhibit System Recovery","T1490","Detect_ShadowCopy_Deletion","rule Detect_ShadowCopy_Deletion : ransomware recovery_inhibit
+{
+    meta:
+        description = ""Detects ransomware deleting VSS shadow copies to prevent recovery""
+        author      = ""Student Dataset""
+        date        = ""2026-01-16""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1490/""
+
+    strings:
+        // vssadmin delete command
+        $vss1 = ""vssadmin delete shadows /all /quiet"" nocase wide ascii
+
+        // WMIC shadow copy delete
+        $vss2 = ""wmic shadowcopy delete""              nocase wide ascii
+
+        // Disable boot recovery
+        $vss3 = ""bcdedit /set {default} recoveryenabled no"" nocase wide ascii
+
+        // Disable automatic repair
+        $vss4 = ""wbadmin delete catalog -quiet""       nocase wide ascii
+
+    condition:
+        filesize < 10MB and
+        any of them
+}","malicious","medium","synthetic_paraphrase"
+"72","Identifier les fichiers qui un spyware qui accède aux sms et contacts sur android","short_fr","fr","Android Spyware","spyware","Data from Local System","T1005","Detect_Android_SMS_Spyware","rule Detect_Android_SMS_Spyware : spyware android mobile
+{
+    meta:
+        description = ""Detects Android spyware accessing SMS, contacts and GPS location""
+        author      = ""Student Dataset""
+        date        = ""2026-01-16""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1005/""
+
+    strings:
+        // Android permissions in manifest
+        $perm1 = ""READ_CONTACTS""       wide ascii
+        $perm2 = ""READ_SMS""            wide ascii
+        $perm3 = ""ACCESS_FINE_LOCATION"" wide ascii
+        $perm4 = ""READ_CALL_LOG""       wide ascii
+
+        // Exfiltration method
+        $upload = ""uploadData""    wide ascii
+        $http   = ""HttpPost""      wide ascii
+
+        // Background service for stealth
+        $svc    = ""BackgroundService"" wide ascii
+
+    condition:
+        filesize < 20MB and
+        3 of ($perm1, $perm2, $perm3, $perm4) and
+        ($upload or $http) and
+        $svc
+}","malicious","medium","synthetic_paraphrase"
+"73","Generate a detection for mimikatz tool used to dump credentials from windows lsass process","short_technical","en","Mimikatz","credential_stealer","OS Credential Dumping","T1003.001","Detect_Mimikatz_Credential_Dump","rule Detect_Mimikatz_Credential_Dump : credential_stealer mimikatz
+{
+    meta:
+        description = ""Detects Mimikatz credential dumping tool variants""
+        author      = ""Student Dataset""
+        date        = ""2026-01-17""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1003/001/""
+
+    strings:
+        // Mimikatz binary name
+        $name1   = ""mimikatz""                   nocase wide ascii
+
+        // Mimikatz module names
+        $mod1    = ""sekurlsa""                   nocase wide ascii
+        $mod2    = ""lsadump""                    nocase wide ascii
+
+        // LSASS process target
+        $lsass   = ""lsass""                      nocase wide ascii
+
+        // Mimikatz commands
+        $cmd1    = ""privilege::debug""           nocase wide ascii
+        $cmd2    = ""sekurlsa::logonpasswords""   nocase wide ascii
+
+        // Hex signature from Mimikatz binary
+        $hex1    = { 6D 69 6D 69 6B 61 74 7A }
+
+    condition:
+        filesize < 50MB and
+        ($name1 or $hex1 or ($mod1 and $cmd2)) and
+        ($lsass or $cmd1)
+}","malicious","medium","synthetic_paraphrase"
+"74","Generate a detection for agent tesla infostealer exfiltrating stolen data via smtp email","short_technical","en","Agent Tesla","infostealer","Exfiltration Over Alternative Protocol","T1048.002","Detect_AgentTesla_SMTP_Exfil","rule Detect_AgentTesla_SMTP_Exfil : infostealer agenttesla smtp
+{
+    meta:
+        description = ""Detects Agent Tesla infostealer using SMTP to exfiltrate credentials""
+        author      = ""Student Dataset""
+        date        = ""2026-01-17""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1048/002/""
+
+    strings:
+        // Agent Tesla marker
+        $tesla  = ""AgentTesla""       nocase wide ascii
+
+        // SMTP exfiltration infrastructure
+        $smtp1  = ""smtp.gmail.com""   wide ascii
+        $smtp2  = ""smtp.mail.ru""     wide ascii
+        $smtp3  = ""MAIL FROM:""       wide ascii
+
+        // Keylogging API
+        $key    = ""GetAsyncKeyState"" wide ascii
+
+        // Clipboard stealing
+        $clip   = ""GetClipboardData"" wide ascii
+
+        // Browser credential path
+        $chrome = ""Google\Chrome\User Data"" wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 10MB and
+        ($tesla or ($smtp1 or $smtp2) and $smtp3) and
+        ($key or $clip or $chrome)
+}","malicious","hard","synthetic_paraphrase"
+"75","Écrire une règle qui détecte cobalt strike beacon utilisé par des groupes apt","short_fr","fr","Cobalt Strike","apt_tool","Command and Control","T1071","Detect_CobaltStrike_Beacon","rule Detect_CobaltStrike_Beacon : apt_tool c2 cobaltstrike
+{
+    meta:
+        description = ""Detects Cobalt Strike beacon used by APT actors for C2""
+        author      = ""Student Dataset""
+        date        = ""2026-01-17""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1071/""
+
+    strings:
+        // Named pipe used by Cobalt Strike
+        $pipe    = ""\\.\pipe\msagent_"" wide ascii
+
+        // Cobalt Strike string artifacts
+        $cs1     = ""beacon""        nocase wide ascii
+        $cs2     = ""cobaltstrike""  nocase wide ascii
+
+        // Sleep obfuscation byte pattern
+        $sleep   = { 48 83 EC 20 B8 01 00 00 00 }
+
+        // CS default config XOR key bytes
+        $cfg     = { 69 68 69 68 69 6B }
+
+        // Staged payload HTTP request pattern
+        $http    = ""/submit.php"" wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 20MB and
+        ($pipe or $cs2 or $cs1) and
+        ($sleep or $cfg or $http)
+}","malicious","hard","synthetic_paraphrase"
+"76","I need to identify malware communicating over dns tunneling to exfiltrate data","short_technical","en","DNS Tunneler","trojan","Exfiltration Over Alternative Protocol","T1048","Detect_DNS_Tunneling_Exfil","rule Detect_DNS_Tunneling_Exfil : trojan exfiltration dns
+{
+    meta:
+        description = ""Detects DNS tunneling used to exfiltrate data over DNS queries""
+        author      = ""Student Dataset""
+        date        = ""2026-01-20""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1048/""
+
+    strings:
+        // DNS query API calls
+        $dns1 = ""DnsQuery""      wide ascii
+        $dns2 = ""gethostbyname"" wide ascii
+        $dns3 = ""DnsQueryEx""    wide ascii
+
+        // Long subdomain pattern used for tunneling (data encoded in subdomain)
+        $long_sub = /[a-zA-Z0-9]{30,}\.[a-z]{2,6}/
+
+        // Known DNS tunnel tool names
+        $iodine = ""iodine""   nocase wide ascii
+        $dnsx   = ""dnscat""   nocase wide ascii
+        $tool3  = ""dns2tcp""  nocase wide ascii
+
+    condition:
+        filesize < 10MB and
+        ($dns1 or $dns2 or $dns3) and
+        ($long_sub or $iodine or $dnsx or $tool3)
+}","malicious","hard","synthetic_paraphrase"
+"77","Générer une signature YARA pour un malware avec des techniques anti-sandbox pour éviter l'analyse","short_fr","fr","Anti-Sandbox","trojan","Virtualization/Sandbox Evasion","T1497","Detect_AntiSandbox_Evasion","rule Detect_AntiSandbox_Evasion : trojan evasion anti_analysis
+{
+    meta:
+        description = ""Detects anti-sandbox and anti-VM evasion techniques""
+        author      = ""Student Dataset""
+        date        = ""2026-01-20""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1497/""
+
+    strings:
+        // Virtual machine detection strings
+        $vm1   = ""VMware""       nocase wide ascii
+        $vm2   = ""VirtualBox""   nocase wide ascii
+        $vm3   = ""QEMU""         nocase wide ascii
+        $vm4   = ""Sandboxie""    nocase wide ascii
+
+        // Anti-debug API
+        $dbg1  = ""IsDebuggerPresent""         wide ascii
+        $dbg2  = ""CheckRemoteDebuggerPresent"" wide ascii
+
+        // Time-based evasion
+        $sleep = ""Sleep""          wide ascii
+        $tick  = ""GetTickCount""   wide ascii
+
+        // Mouse activity check (sandbox has no mouse)
+        $mouse = ""GetCursorPos""   wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 10MB and
+        ($vm1 or $vm2 or $vm3 or $vm4 or $dbg1 or $dbg2) and
+        ($sleep or $tick or $mouse)
+}","malicious","hard","synthetic_paraphrase"
+"78","Find any PE file that mbr wiper malware that overwrites master boot record to destroy system","short_technical","en","MBR Wiper","wiper","Disk Wipe","T1561.002","Detect_MBR_Wiper_Malware","rule Detect_MBR_Wiper_Malware : wiper destructive mbr
+{
+    meta:
+        description = ""Detects MBR wiper malware overwriting Master Boot Record""
+        author      = ""Student Dataset""
+        date        = ""2026-01-20""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1561/002/""
+
+    strings:
+        // Raw disk access via device path
+        $disk   = ""\\.\PhysicalDrive0"" wide ascii
+
+        // Write API to overwrite MBR
+        $write  = ""WriteFile""           wide ascii
+
+        // Device control for low-level disk operations
+        $ioctl  = ""DeviceIoControl""     wide ascii
+
+        // Zero-fill pattern (512 bytes overwrite signature)
+        $zeros  = { 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+                    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 }
+
+        // Known wiper marker strings
+        $wiper1 = ""Shamoon""  nocase
+        $wiper2 = ""Destover"" nocase
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        $disk and
+        ($write or $ioctl) and
+        ($zeros or $wiper1 or $wiper2)
+}","malicious","hard","synthetic_paraphrase"
+"79","Écrire une règle qui détecte un malware qui modifie le fichier hosts pour rediriger le trafic","short_fr","fr","Hosts Modifier","trojan","Boot or Logon Autostart Execution","T1547","Detect_Hosts_File_Modification","rule Detect_Hosts_File_Modification : trojan redirect dns_hijack
+{
+    meta:
+        description = ""Detects malware modifying Windows hosts file to redirect traffic""
+        author      = ""Student Dataset""
+        date        = ""2026-01-21""
+        severity    = ""medium""
+        reference   = ""https://attack.mitre.org/techniques/T1547/""
+
+    strings:
+        // Windows hosts file path
+        $hosts1 = ""C:\Windows\System32\drivers\etc\hosts"" wide ascii
+        $hosts2 = ""\drivers\etc\hosts""                      wide ascii
+
+        // File write API
+        $write  = ""WriteFile"" wide ascii
+
+        // Redirect to loopback or null
+        $redir1 = ""127.0.0.1"" wide ascii
+        $redir2 = ""0.0.0.0""   wide ascii
+
+        // Example bank domain redirection
+        $bank   = ""paypal.com""    nocase wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        ($hosts1 or $hosts2) and
+        $write and
+        ($redir1 or $redir2)
+}","malicious","medium","synthetic_paraphrase"
+"80","Create a detection rule for dropper that extracts and runs embedded executable from its resources","short_technical","en","Resource Dropper","dropper","Obfuscated Files or Information","T1027.009","Detect_Resource_Dropper_PE","rule Detect_Resource_Dropper_PE : dropper embedded_payload
+{
+    meta:
+        description = ""Detects dropper extracting and executing embedded PE from resources""
+        author      = ""Student Dataset""
+        date        = ""2026-01-21""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1027/009/""
+
+    strings:
+        // Resource access API chain
+        $res1 = ""FindResource""    wide ascii
+        $res2 = ""LoadResource""    wide ascii
+        $res3 = ""LockResource""    wide ascii
+        $res4 = ""SizeofResource""  wide ascii
+
+        // Write extracted payload to disk
+        $write  = ""WriteFile""     wide ascii
+
+        // Execute dropped file
+        $exec1  = ""CreateProcess"" wide ascii
+        $exec2  = ""ShellExecute""  wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 20MB and
+        3 of ($res1, $res2, $res3, $res4) and
+        $write and
+        ($exec1 or $exec2)
+}","malicious","hard","synthetic_paraphrase"
+"81","Générer une signature YARA pour un macro word malveillant qui télécharge un payload via powershell","short_fr","fr","Maldoc Word","maldoc","Phishing: Spearphishing Attachment","T1566.001","Detect_Maldoc_Word_Macro_Dropper","rule Detect_Maldoc_Word_Macro_Dropper : maldoc phishing macro
+{
+    meta:
+        description = ""Detects malicious Word document with macro that downloads payload""
+        author      = ""Student Dataset""
+        date        = ""2026-01-21""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1566/001/""
+
+    strings:
+        // VBA macro auto-execution triggers
+        $auto1  = ""AutoOpen""        wide ascii
+        $auto2  = ""Document_Open""   wide ascii
+
+        // Shell execution in macro
+        $shell1 = ""Shell""           wide ascii
+        $shell2 = ""WScript.Shell""   wide ascii
+
+        // PowerShell download cradle inside macro
+        $ps     = ""powershell""      nocase wide ascii
+        $dl     = ""DownloadFile""    wide ascii
+
+        // URL pattern in document
+        $url    = /https?:\/\/[a-zA-Z0-9.\/-]{10,}/
+
+    condition:
+        filesize < 10MB and
+        ($auto1 or $auto2) and
+        ($shell1 or $shell2) and
+        $ps and
+        ($dl or $url)
+}","malicious","medium","synthetic_paraphrase"
+"82","Find any PE file that fileless malware using reflective dll injection running only in memory","short_technical","en","Fileless Malware","apt_tool","Process Injection: Reflective DLL","T1055.001","Detect_Reflective_DLL_Injection","rule Detect_Reflective_DLL_Injection : apt_tool fileless injection
+{
+    meta:
+        description = ""Detects reflective DLL injection technique for fileless execution""
+        author      = ""Student Dataset""
+        date        = ""2026-01-22""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1055/001/""
+
+    strings:
+        // Reflective loader export name
+        $reflect1 = ""ReflectiveLoader"" wide ascii
+
+        // Reflective loader in hex
+        $reflect2 = { 52 65 66 6C 65 63 74 69 76 65 4C 6F 61 64 65 72 }
+
+        // Memory allocation for in-memory payload
+        $valloc   = ""VirtualAlloc""     wide ascii
+        $valloc2  = ""VirtualAllocEx""   wide ascii
+
+        // No-file write (used with in-memory execution)
+        $nof      = ""NtCreateSection""  wide ascii
+
+        // Function pointer call pattern (shellcode stub)
+        $stub     = { 55 8B EC 83 EC ?? 53 56 57 }
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        ($reflect1 or $reflect2) and
+        ($valloc or $valloc2 or $nof)
+}","malicious","hard","synthetic_paraphrase"
+"83","Écrire une règle qui détecte un malware qui utilise tor pour anonymiser ses communications c2","short_fr","fr","Tor C2","trojan","Proxy: Multi-hop Proxy","T1090.003","Detect_Tor_C2_Communication","rule Detect_Tor_C2_Communication : trojan tor proxy anonymization
+{
+    meta:
+        description = ""Detects malware routing C2 traffic through Tor network""
+        author      = ""Student Dataset""
+        date        = ""2026-01-22""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1090/003/""
+
+    strings:
+        // Tor hidden service domain
+        $onion   = "".onion""          wide ascii
+
+        // Tor SOCKS proxy default address
+        $socks   = ""127.0.0.1:9050"" wide ascii
+
+        // Tor reference strings
+        $tor1    = ""tor""             nocase wide ascii
+
+        // SOCKS5 protocol marker
+        $socks5  = ""SOCKS5""          wide ascii
+
+        // Tor browser/binary references
+        $tb      = ""tor.exe""         nocase wide ascii
+
+    condition:
+        filesize < 20MB and
+        ($onion or $socks) and
+        ($tor1 or $socks5 or $tb)
+}","malicious","hard","synthetic_paraphrase"
+"84","Generate a detection for macro excel file that launches powershell when workbook opens","short_technical","en","Excel Macro","maldoc","Phishing","T1566","Detect_Excel_Macro_PowerShell","rule Detect_Excel_Macro_PowerShell : maldoc excel macro powershell
+{
+    meta:
+        description = ""Detects malicious Excel macro launching PowerShell on workbook open""
+        author      = ""Student Dataset""
+        date        = ""2026-01-22""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1566/""
+
+    strings:
+        // Excel macro auto-open trigger
+        $wb_open  = ""Workbook_Open""        wide ascii
+        $auto     = ""Auto_Open""            wide ascii
+
+        // PowerShell invocation
+        $ps       = ""powershell""           nocase wide ascii
+
+        // Obfuscated PS flags
+        $enc      = ""-encodedcommand""      nocase wide ascii
+        $bypass   = ""-executionpolicy bypass"" nocase wide ascii
+        $nop      = ""-noprofile""           nocase wide ascii
+
+        // Download method
+        $dl       = ""DownloadString""       wide ascii
+
+    condition:
+        filesize < 5MB and
+        ($wb_open or $auto) and
+        $ps and
+        ($enc or $bypass or $nop or $dl)
+}","malicious","medium","synthetic_paraphrase"
+"85","Je veux détecter un spyware qui active la webcam et le microphone à distance","short_fr","fr","Camfecting Spyware","spyware","Audio Capture","T1123","Detect_Camfecting_Spyware","rule Detect_Camfecting_Spyware : spyware surveillance camera microphone
+{
+    meta:
+        description = ""Detects spyware silently activating camera and microphone""
+        author      = ""Student Dataset""
+        date        = ""2026-01-23""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1123/""
+
+    strings:
+        // Camera capture Windows API
+        $cam1   = ""capCreateCaptureWindow"" wide ascii
+        $cam2   = ""VideoCapture""           wide ascii
+        $cam3   = ""ICaptureGraphBuilder""   wide ascii
+
+        // Microphone/audio record API
+        $mic1   = ""waveInOpen""   wide ascii
+        $mic2   = ""AudioRecord""  wide ascii
+        $mic3   = ""mciSendString"" wide ascii
+
+        // Send captured data to remote server
+        $send   = ""send""         wide ascii
+        $upload = ""HttpSendRequest"" wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 10MB and
+        ($cam1 or $cam2 or $cam3) and
+        ($mic1 or $mic2 or $mic3) and
+        ($send or $upload)
+}","malicious","hard","synthetic_paraphrase"
+"86","Write a YARA rule to chrome password stealer accessing saved credentials sqlite database","short_technical","en","Chrome Stealer","infostealer","Credentials from Web Browsers","T1555.003","Detect_Chrome_Password_Stealer","rule Detect_Chrome_Password_Stealer : infostealer credential chrome
+{
+    meta:
+        description = ""Detects infostealer accessing Chrome saved passwords via SQLite""
+        author      = ""Student Dataset""
+        date        = ""2026-01-23""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1555/003/""
+
+    strings:
+        // Chrome user data path
+        $path1  = ""Google\Chrome\User Data""   wide ascii
+        $path2  = ""Login Data""                  wide ascii
+
+        // Windows DPAPI decryption (Chrome uses this to protect passwords)
+        $dpapi  = ""CryptUnprotectData""          wide ascii
+
+        // SQLite query to extract credentials
+        $sql    = ""SELECT * FROM logins""        wide ascii
+        $sql2   = ""origin_url""                  wide ascii
+
+        // Encryption key file
+        $key    = ""Local State""                 wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 10MB and
+        ($path1 or $path2) and
+        ($dpapi or $sql or $sql2) and
+        $key
+}","malicious","medium","synthetic_paraphrase"
+"87","Identifier les fichiers qui un ransomware qui crée un mutex pour éviter une double infection","short_fr","fr","Mutex Ransomware","ransomware","Data Encrypted for Impact","T1486","Detect_Ransomware_Mutex_Singleton","rule Detect_Ransomware_Mutex_Singleton : ransomware mutex
+{
+    meta:
+        description = ""Detects ransomware using mutex to ensure single instance execution""
+        author      = ""Student Dataset""
+        date        = ""2026-01-23""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1486/""
+
+    strings:
+        // Mutex creation API
+        $mutex_api = ""CreateMutexA""  wide ascii
+        $mutex_api2= ""CreateMutexW""  wide ascii
+
+        // Global namespace mutex prefix
+        $global    = ""Global\""      wide ascii
+
+        // Encryption API confirmation
+        $encrypt   = ""CryptEncrypt""  wide ascii
+
+        // Ransom note dropped after encryption
+        $note1     = ""README""        wide ascii
+        $note2     = ""HOW_TO_DECRYPT"" nocase wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        ($mutex_api or $mutex_api2) and
+        $global and
+        ($encrypt or $note1 or $note2)
+}","malicious","medium","synthetic_paraphrase"
+"88","Generate a detection for port scanner malware performing network reconnaissance on lan","short_technical","en","Port Scanner","trojan","Network Service Discovery","T1046","Detect_Port_Scanner_Recon","rule Detect_Port_Scanner_Recon : trojan reconnaissance port_scan
+{
+    meta:
+        description = ""Detects malicious port scanner performing LAN network reconnaissance""
+        author      = ""Student Dataset""
+        date        = ""2026-01-23""
+        severity    = ""medium""
+        reference   = ""https://attack.mitre.org/techniques/T1046/""
+
+    strings:
+        // Socket creation for port scanning
+        $sock    = ""socket""   wide ascii
+        $connect = ""connect""  wide ascii
+
+        // LAN IP range pattern
+        $lan1    = /192\.168\.[0-9]{1,3}\.[0-9]{1,3}/
+        $lan2    = /10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/
+
+        // Known scanner tool names
+        $scan1   = ""portscan""  nocase wide ascii
+        $scan2   = ""nmap""      nocase wide ascii
+        $scan3   = ""masscan""   nocase wide ascii
+
+        // Port range iteration pattern
+        $port_loop = { 66 83 ?? 01 66 3D ?? ?? }
+
+    condition:
+        pe.is_pe and
+        filesize < 10MB and
+        $sock and $connect and
+        ($lan1 or $lan2 or $scan1 or $scan2 or $scan3 or $port_loop)
+}","malicious","medium","synthetic_paraphrase"
+"89","Identifier les fichiers qui un exploit eternalblue qui attaque smb pour se propager comme wannacry","short_fr","fr","EternalBlue","worm","Exploit Public-Facing Application","T1190","Detect_EternalBlue_SMB_Exploit","rule Detect_EternalBlue_SMB_Exploit : worm exploit smb eternalblue
+{
+    meta:
+        description = ""Detects EternalBlue SMB exploit used by WannaCry and NotPetya""
+        author      = ""Student Dataset""
+        date        = ""2026-01-24""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1190/""
+
+    strings:
+        // SMB protocol marker
+        $smb    = ""SMB""           wide ascii
+
+        // Named pipe for admin access
+        $pipe   = ""\IPC$""        wide ascii
+
+        // EternalBlue shellcode exploit header
+        $eb_hex = { FC E8 82 00 00 00 60 89 E5 31 C0 64 8B 50 30 }
+
+        // MS17-010 vulnerability target buffer
+        $ms17   = { 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+                    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 }
+
+        // DoublePulsar backdoor marker
+        $dp     = ""DoublePulsar""  nocase
+
+    condition:
+        filesize < 1MB and
+        $smb and
+        $pipe and
+        ($eb_hex or $ms17 or $dp)
+}","malicious","hard","synthetic_paraphrase"
+"90","Write a YARA rule to ransomware that drops a ransom note named help_decrypt or readme","short_technical","en","Ransom Note Dropper","ransomware","Data Encrypted for Impact","T1486","Detect_Ransomware_Note_Drop","rule Detect_Ransomware_Note_Drop : ransomware ransom_note
+{
+    meta:
+        description = ""Detects ransomware dropping common ransom note filenames""
+        author      = ""Student Dataset""
+        date        = ""2026-01-24""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1486/""
+
+    strings:
+        // Common ransom note filenames
+        $note1  = ""HELP_DECRYPT.txt""      nocase fullword
+        $note2  = ""README.txt""            nocase fullword
+        $note3  = ""HOW_TO_DECRYPT.txt""    nocase fullword
+        $note4  = ""YOUR_FILES_LOCKED.txt"" nocase fullword
+        $note5  = ""DECRYPT_INSTRUCTIONS""  nocase
+
+        // Bitcoin payment demand
+        $btc    = ""bitcoin""      nocase wide ascii
+        $wallet = ""BTC wallet""   nocase wide ascii
+        $tor    = "".onion""       wide ascii
+
+    condition:
+        filesize < 10MB and
+        any of ($note1, $note2, $note3, $note4, $note5) and
+        ($btc or $wallet or $tor)
+}","malicious","easy","synthetic_paraphrase"
+"91","Build a YARA signature that flags ransomware using aes-256 encryption with hardcoded key in binary","short_technical","en","AES Ransomware","ransomware","Data Encrypted for Impact","T1486","Detect_AES256_Ransomware_Hardcoded","rule Detect_AES256_Ransomware_Hardcoded : ransomware aes encryption
+{
+    meta:
+        description = ""Detects ransomware implementing AES-256 with hardcoded key material""
+        author      = ""Student Dataset""
+        date        = ""2026-01-25""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1486/""
+
+    strings:
+        // AES string references
+        $aes1   = ""AES""              wide ascii
+        $aes2   = ""AES-256""          wide ascii
+        $aes3   = ""AES_set_encrypt_key"" wide ascii
+
+        // Windows BCrypt AES provider
+        $bcrypt = ""Microsoft Primitive Provider"" wide ascii
+        $alg    = ""AES\0""           wide ascii
+
+        // Hardcoded 32-byte key pattern (example structure)
+        $key_pattern = { ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ??
+                         ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? }
+
+        // Encrypted file extension drop
+        $ext1   = "".enc""   fullword
+        $ext2   = "".aes""   fullword
+        $ext3   = "".crypt"" fullword
+
+    condition:
+        pe.is_pe and
+        filesize < 10MB and
+        ($aes1 or $aes2 or $aes3 or $bcrypt) and
+        any of ($ext1, $ext2, $ext3) and
+        $key_pattern
+}","malicious","hard","synthetic_paraphrase"
+"92","Detect a ransomware that encrypts files using CryptEncrypt API — target PE binary, filesize < 2MB","technical","en","WannaCry","ransomware","Data Encrypted for Impact","T1486","Detect_WannaCry_CryptEncrypt","rule Detect_WannaCry_CryptEncrypt : ransomware encryption
+{
+    meta:
+        description = ""Detects WannaCry ransomware via CryptEncrypt API and .WNCRY extension""
+        author      = ""Student Dataset""
+        date        = ""2026-01-10""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1486/""
+
+    strings:
+        // Windows crypto API used for file encryption
+        $api1 = ""CryptEncrypt""
+        $api2 = ""CryptAcquireContext"" nocase
+
+        // WannaCry specific file extension
+        $ext  = "".WNCRY"" fullword
+
+        // Ransom note filename
+        $note = ""@Please_Read_Me@.txt"" fullword
+
+        // WannaCry string marker
+        $mark = ""WannaCry"" nocase
+
+    condition:
+        pe.is_pe and
+        filesize < 10MB and
+        $api1 and
+        ($ext or $note or $mark)
+}","malicious","medium","synthetic_difficulty_upgrade"
+"93","Détecter un ransomware LockBit qui renomme les fichiers avec l'extension .locked — fichier PE uniquement, taille < 2 Mo","technical_fr","fr","LockBit","ransomware","Data Encrypted for Impact","T1486","Detect_LockBit_Extension","rule Detect_LockBit_Extension : ransomware lockbit
+{
+    meta:
+        description = ""Detects LockBit ransomware via .locked extension and ransom note""
+        author      = ""Student Dataset""
+        date        = ""2026-01-10""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1486/""
+
+    strings:
+        // LockBit file extensions
+        $ext1 = "".locked""  fullword
+        $ext2 = "".lockbit"" fullword
+
+        // LockBit ransom note
+        $note = ""LockBit_Readme.txt"" fullword
+
+        // LockBit string in binary
+        $id   = ""LockBit"" nocase
+
+        // Hex pattern found in LockBit samples
+        $hex1 = { 4C 6F 63 6B 42 69 74 }
+
+    condition:
+        pe.is_pe and
+        filesize < 2MB and
+        filesize < 5MB and
+        ($ext1 or $ext2 or $note) and
+        ($id or $hex1)
+}","malicious","medium","synthetic_difficulty_upgrade"
+"94","Je veux détecter un virus qui se propage via clé USB via autorun.inf — fichier PE uniquement, taille < 2 Mo","formal_fr","fr","USB Worm","worm","Replication Through Removable Media","T1091","Detect_USB_Worm_Autorun","rule Detect_USB_Worm_Autorun : worm usb autorun
+{
+    meta:
+        description = ""Detects USB worm using autorun.inf to spread via removable media""
+        author      = ""Student Dataset""
+        date        = ""2026-01-12""
+        severity    = ""medium""
+        reference   = ""https://attack.mitre.org/techniques/T1091/""
+
+    strings:
+        // Autorun configuration file
+        $autorun = ""autorun.inf"" nocase
+
+        // Autorun open command
+        $open    = ""open=""
+
+        // Shell command override
+        $shell   = ""shell\open\command"" nocase
+
+        // Self-copy pattern
+        $copy    = ""CopyFileA"" wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 2MB and
+        filesize < 1MB and
+        $autorun and
+        ($open or $shell) and
+        $copy
+}","malicious","medium","synthetic_difficulty_upgrade"
+"95","detect trojan modifying Windows registry Run key for startup persistence — target PE binary, filesize < 2MB","technical","en","Generic Trojan","trojan","Registry Run Keys","T1547.001","Detect_Registry_Run_Persistence","rule Detect_Registry_Run_Persistence : trojan persistence
+{
+    meta:
+        description = ""Detects trojan adding itself to registry Run key for persistence at startup""
+        author      = ""Student Dataset""
+        date        = ""2026-01-13""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1547/001/""
+
+    strings:
+        // Registry autorun keys
+        $reg1 = ""SOFTWARE\Microsoft\Windows\CurrentVersion\Run""     wide ascii
+        $reg2 = ""SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"" wide ascii
+
+        // API to write registry value
+        $api1 = ""RegSetValueEx""  wide ascii
+        $api2 = ""RegOpenKeyEx""   wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        ($reg1 or $reg2) and
+        $api1 and $api2
+}","malicious","medium","synthetic_difficulty_upgrade"
+"96","détecter XMRig, un crypto-mineur Monero qui utilise 100% du CPU — fichier PE uniquement, taille < 2 Mo","informal_fr","fr","XMRig","cryptominer","Resource Hijacking","T1496","Detect_XMRig_Monero_Miner","rule Detect_XMRig_Monero_Miner : cryptominer xmrig
+{
+    meta:
+        description = ""Detects XMRig Monero CPU miner binary and configuration""
+        author      = ""Student Dataset""
+        date        = ""2026-01-15""
+        severity    = ""medium""
+        reference   = ""https://attack.mitre.org/techniques/T1496/""
+
+    strings:
+        // XMRig binary name
+        $name1   = ""xmrig""            nocase wide ascii
+
+        // Monero coin reference
+        $coin    = ""monero""           nocase wide ascii
+
+        // Mining pool domains
+        $pool1   = ""pool.minexmr.com"" wide ascii
+        $pool2   = ""xmrpool.eu""       wide ascii
+
+        // XMRig donate address
+        $donate  = ""donate.xmrig.com"" wide ascii
+
+        // CPU usage flag
+        $cpuflag = ""--max-cpu-usage""  wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 2MB and
+        filesize < 20MB and
+        ($name1 or $donate) and
+        ($coin or $pool1 or $pool2 or $cpuflag)
+}","malicious","medium","synthetic_difficulty_upgrade"
+"97","detect ransomware that drops a ransom note named HELP_DECRYPT or README — target PE binary, filesize < 2MB","short_technical","en","Ransom Note Dropper","ransomware","Data Encrypted for Impact","T1486","Detect_Ransomware_Note_Drop","rule Detect_Ransomware_Note_Drop : ransomware ransom_note
+{
+    meta:
+        description = ""Detects ransomware dropping common ransom note filenames""
+        author      = ""Student Dataset""
+        date        = ""2026-01-24""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1486/""
+
+    strings:
+        // Common ransom note filenames
+        $note1  = ""HELP_DECRYPT.txt""      nocase fullword
+        $note2  = ""README.txt""            nocase fullword
+        $note3  = ""HOW_TO_DECRYPT.txt""    nocase fullword
+        $note4  = ""YOUR_FILES_LOCKED.txt"" nocase fullword
+        $note5  = ""DECRYPT_INSTRUCTIONS""  nocase
+
+        // Bitcoin payment demand
+        $btc    = ""bitcoin""      nocase wide ascii
+        $wallet = ""BTC wallet""   nocase wide ascii
+        $tor    = "".onion""       wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 2MB and
+        filesize < 10MB and
+        any of ($note1, $note2, $note3, $note4, $note5) and
+        ($btc or $wallet or $tor)
+}","malicious","medium","synthetic_difficulty_upgrade"
+"98","اكتشاف البرامج الضارة التي تستخدم أنفاق DNS لتسريب البيانات","technical_ar","ar","DNS Tunneler","trojan","Exfiltration Over Alternative Protocol","T1048","Detect_DNS_Tunneling_Exfil","rule Detect_DNS_Tunneling_Exfil : trojan exfiltration dns
+{
+    meta:
+        description = ""Detects DNS tunneling used to exfiltrate data over DNS queries""
+        author      = ""Student Dataset""
+        date        = ""2026-01-20""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1048/""
+
+    strings:
+        // DNS query API calls
+        $dns1 = ""DnsQuery""      wide ascii
+        $dns2 = ""gethostbyname"" wide ascii
+        $dns3 = ""DnsQueryEx""    wide ascii
+
+        // Long subdomain pattern used for tunneling (data encoded in subdomain)
+        $long_sub = /[a-zA-Z0-9]{30,}\.[a-z]{2,6}/
+
+        // Known DNS tunnel tool names
+        $iodine = ""iodine""   nocase wide ascii
+        $dnsx   = ""dnscat""   nocase wide ascii
+        $tool3  = ""dns2tcp""  nocase wide ascii
+
+    condition:
+        filesize < 10MB and
+        ($dns1 or $dns2 or $dns3) and
+        ($long_sub or $iodine or $dnsx or $tool3)
+}","malicious","hard","synthetic_translation"
+"99","Rilevare malware con tecniche anti-sandbox per evitare l'analisi","technical_it","it","Anti-Sandbox","trojan","Virtualization/Sandbox Evasion","T1497","Detect_AntiSandbox_Evasion","rule Detect_AntiSandbox_Evasion : trojan evasion anti_analysis
+{
+    meta:
+        description = ""Detects anti-sandbox and anti-VM evasion techniques""
+        author      = ""Student Dataset""
+        date        = ""2026-01-20""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1497/""
+
+    strings:
+        // Virtual machine detection strings
+        $vm1   = ""VMware""       nocase wide ascii
+        $vm2   = ""VirtualBox""   nocase wide ascii
+        $vm3   = ""QEMU""         nocase wide ascii
+        $vm4   = ""Sandboxie""    nocase wide ascii
+
+        // Anti-debug API
+        $dbg1  = ""IsDebuggerPresent""         wide ascii
+        $dbg2  = ""CheckRemoteDebuggerPresent"" wide ascii
+
+        // Time-based evasion
+        $sleep = ""Sleep""          wide ascii
+        $tick  = ""GetTickCount""   wide ascii
+
+        // Mouse activity check (sandbox has no mouse)
+        $mouse = ""GetCursorPos""   wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 10MB and
+        ($vm1 or $vm2 or $vm3 or $vm4 or $dbg1 or $dbg2) and
+        ($sleep or $tick or $mouse)
+}","malicious","hard","synthetic_translation"
+"100","Détecter un wiper MBR qui écrase le secteur de démarrage pour détruire le système","technical_fr","fr","MBR Wiper","wiper","Disk Wipe","T1561.002","Detect_MBR_Wiper_Malware","rule Detect_MBR_Wiper_Malware : wiper destructive mbr
+{
+    meta:
+        description = ""Detects MBR wiper malware overwriting Master Boot Record""
+        author      = ""Student Dataset""
+        date        = ""2026-01-20""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1561/002/""
+
+    strings:
+        // Raw disk access via device path
+        $disk   = ""\\.\PhysicalDrive0"" wide ascii
+
+        // Write API to overwrite MBR
+        $write  = ""WriteFile""           wide ascii
+
+        // Device control for low-level disk operations
+        $ioctl  = ""DeviceIoControl""     wide ascii
+
+        // Zero-fill pattern (512 bytes overwrite signature)
+        $zeros  = { 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+                    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 }
+
+        // Known wiper marker strings
+        $wiper1 = ""Shamoon""  nocase
+        $wiper2 = ""Destover"" nocase
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        $disk and
+        ($write or $ioctl) and
+        ($zeros or $wiper1 or $wiper2)
+}","malicious","hard","synthetic_translation"
+"101","اكتشاف البرامج الضارة بدون ملفات باستخدام حقن DLL الانعكاسي في الذاكرة","technical_ar","ar","Fileless Malware","apt_tool","Process Injection: Reflective DLL","T1055.001","Detect_Reflective_DLL_Injection","rule Detect_Reflective_DLL_Injection : apt_tool fileless injection
+{
+    meta:
+        description = ""Detects reflective DLL injection technique for fileless execution""
+        author      = ""Student Dataset""
+        date        = ""2026-01-22""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1055/001/""
+
+    strings:
+        // Reflective loader export name
+        $reflect1 = ""ReflectiveLoader"" wide ascii
+
+        // Reflective loader in hex
+        $reflect2 = { 52 65 66 6C 65 63 74 69 76 65 4C 6F 61 64 65 72 }
+
+        // Memory allocation for in-memory payload
+        $valloc   = ""VirtualAlloc""     wide ascii
+        $valloc2  = ""VirtualAllocEx""   wide ascii
+
+        // No-file write (used with in-memory execution)
+        $nof      = ""NtCreateSection""  wide ascii
+
+        // Function pointer call pattern (shellcode stub)
+        $stub     = { 55 8B EC 83 EC ?? 53 56 57 }
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        ($reflect1 or $reflect2) and
+        ($valloc or $valloc2 or $nof)
+}","malicious","hard","synthetic_translation"
+"102","Rilevare un infostealer che ruba password salvate da Chrome via SQLite","technical_it","it","Chrome Stealer","infostealer","Credentials from Web Browsers","T1555.003","Detect_Chrome_Password_Stealer","rule Detect_Chrome_Password_Stealer : infostealer credential chrome
+{
+    meta:
+        description = ""Detects infostealer accessing Chrome saved passwords via SQLite""
+        author      = ""Student Dataset""
+        date        = ""2026-01-23""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1555/003/""
+
+    strings:
+        // Chrome user data path
+        $path1  = ""Google\Chrome\User Data""   wide ascii
+        $path2  = ""Login Data""                  wide ascii
+
+        // Windows DPAPI decryption (Chrome uses this to protect passwords)
+        $dpapi  = ""CryptUnprotectData""          wide ascii
+
+        // SQLite query to extract credentials
+        $sql    = ""SELECT * FROM logins""        wide ascii
+        $sql2   = ""origin_url""                  wide ascii
+
+        // Encryption key file
+        $key    = ""Local State""                 wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 10MB and
+        ($path1 or $path2) and
+        ($dpapi or $sql or $sql2) and
+        $key
+}","malicious","medium","synthetic_translation"
+"103","الكشف عن استغلال EternalBlue لبروتوكول SMB كما يفعل WannaCry","technical_ar","ar","EternalBlue","worm","Exploit Public-Facing Application","T1190","Detect_EternalBlue_SMB_Exploit","rule Detect_EternalBlue_SMB_Exploit : worm exploit smb eternalblue
+{
+    meta:
+        description = ""Detects EternalBlue SMB exploit used by WannaCry and NotPetya""
+        author      = ""Student Dataset""
+        date        = ""2026-01-24""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1190/""
+
+    strings:
+        // SMB protocol marker
+        $smb    = ""SMB""           wide ascii
+
+        // Named pipe for admin access
+        $pipe   = ""\IPC$""        wide ascii
+
+        // EternalBlue shellcode exploit header
+        $eb_hex = { FC E8 82 00 00 00 60 89 E5 31 C0 64 8B 50 30 }
+
+        // MS17-010 vulnerability target buffer
+        $ms17   = { 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+                    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 }
+
+        // DoublePulsar backdoor marker
+        $dp     = ""DoublePulsar""  nocase
+
+    condition:
+        filesize < 1MB and
+        $smb and
+        $pipe and
+        ($eb_hex or $ms17 or $dp)
+}","malicious","hard","synthetic_translation"
+"104","Détecter un ransomware utilisant AES-256 avec une clé codée en dur dans le binaire","technical_fr","fr","AES Ransomware","ransomware","Data Encrypted for Impact","T1486","Detect_AES256_Ransomware_Hardcoded","rule Detect_AES256_Ransomware_Hardcoded : ransomware aes encryption
+{
+    meta:
+        description = ""Detects ransomware implementing AES-256 with hardcoded key material""
+        author      = ""Student Dataset""
+        date        = ""2026-01-25""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1486/""
+
+    strings:
+        // AES string references
+        $aes1   = ""AES""              wide ascii
+        $aes2   = ""AES-256""          wide ascii
+        $aes3   = ""AES_set_encrypt_key"" wide ascii
+
+        // Windows BCrypt AES provider
+        $bcrypt = ""Microsoft Primitive Provider"" wide ascii
+        $alg    = ""AES\0""           wide ascii
+
+        // Hardcoded 32-byte key pattern (example structure)
+        $key_pattern = { ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ??
+                         ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? }
+
+        // Encrypted file extension drop
+        $ext1   = "".enc""   fullword
+        $ext2   = "".aes""   fullword
+        $ext3   = "".crypt"" fullword
+
+    condition:
+        pe.is_pe and
+        filesize < 10MB and
+        ($aes1 or $aes2 or $aes3 or $bcrypt) and
+        any of ($ext1, $ext2, $ext3) and
+        $key_pattern
+}","malicious","hard","synthetic_translation"
+"105","Detect ransomware targeting hospital systems encrypting patient records","technical","en","WannaCry","ransomware","Data Encrypted for Impact","T1486","Detect_WannaCry_CryptEncrypt","rule Detect_WannaCry_CryptEncrypt : ransomware encryption
+{
+    meta:
+        description = ""Detects WannaCry ransomware via CryptEncrypt API and .WNCRY extension""
+        author      = ""Student Dataset""
+        date        = ""2026-01-10""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1486/""
+
+    strings:
+        // Windows crypto API used for file encryption
+        $api1 = ""CryptEncrypt""
+        $api2 = ""CryptAcquireContext"" nocase
+
+        // WannaCry specific file extension
+        $ext  = "".WNCRY"" fullword
+
+        // Ransom note filename
+        $note = ""@Please_Read_Me@.txt"" fullword
+
+        // WannaCry string marker
+        $mark = ""WannaCry"" nocase
+
+    condition:
+        pe.is_pe and
+        filesize < 10MB and
+        $api1 and
+        ($ext or $note or $mark)
+}","malicious","easy","synthetic_scenario_variant"
+"106","Détecter un ransomware ciblant les hôpitaux et chiffrant les dossiers patients","technical_fr","fr","WannaCry","ransomware","Data Encrypted for Impact","T1486","Detect_WannaCry_CryptEncrypt","rule Detect_WannaCry_CryptEncrypt : ransomware encryption
+{
+    meta:
+        description = ""Detects WannaCry ransomware via CryptEncrypt API and .WNCRY extension""
+        author      = ""Student Dataset""
+        date        = ""2026-01-10""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1486/""
+
+    strings:
+        // Windows crypto API used for file encryption
+        $api1 = ""CryptEncrypt""
+        $api2 = ""CryptAcquireContext"" nocase
+
+        // WannaCry specific file extension
+        $ext  = "".WNCRY"" fullword
+
+        // Ransom note filename
+        $note = ""@Please_Read_Me@.txt"" fullword
+
+        // WannaCry string marker
+        $mark = ""WannaCry"" nocase
+
+    condition:
+        pe.is_pe and
+        filesize < 10MB and
+        $api1 and
+        ($ext or $note or $mark)
+}","malicious","easy","synthetic_scenario_variant"
+"107","Detect keylogger installed on bank employee workstations to steal credentials","technical","en","Generic Keylogger","spyware","Input Capture: Keylogging","T1056.001","Detect_Keylogger_API","rule Detect_Keylogger_API : spyware keylogger
+{
+    meta:
+        description = ""Detects keylogger using Windows hook API to capture keystrokes""
+        author      = ""Student Dataset""
+        date        = ""2026-01-11""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1056/001/""
+
+    strings:
+        // Windows global keyboard hook
+        $api1 = ""SetWindowsHookEx""  wide ascii
+        $api2 = ""GetAsyncKeyState""  wide ascii
+        $api3 = ""GetKeyboardState""  wide ascii
+
+        // Log file name pattern
+        $log1 = ""keylog"" nocase
+        $log2 = ""keystroke"" nocase
+
+        // Hex opcode for hook callback pattern
+        $hex1 = { 55 8B EC 83 EC ?? 53 56 57 }
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        (2 of ($api1, $api2, $api3)) and
+        ($log1 or $log2 or $hex1)
+}","malicious","medium","synthetic_scenario_variant"
+"108","Détecter un keylogger installé sur les postes bancaires pour voler les identifiants","technical_fr","fr","Generic Keylogger","spyware","Input Capture: Keylogging","T1056.001","Detect_Keylogger_API","rule Detect_Keylogger_API : spyware keylogger
+{
+    meta:
+        description = ""Detects keylogger using Windows hook API to capture keystrokes""
+        author      = ""Student Dataset""
+        date        = ""2026-01-11""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1056/001/""
+
+    strings:
+        // Windows global keyboard hook
+        $api1 = ""SetWindowsHookEx""  wide ascii
+        $api2 = ""GetAsyncKeyState""  wide ascii
+        $api3 = ""GetKeyboardState""  wide ascii
+
+        // Log file name pattern
+        $log1 = ""keylog"" nocase
+        $log2 = ""keystroke"" nocase
+
+        // Hex opcode for hook callback pattern
+        $hex1 = { 55 8B EC 83 EC ?? 53 56 57 }
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        (2 of ($api1, $api2, $api3)) and
+        ($log1 or $log2 or $hex1)
+}","malicious","medium","synthetic_scenario_variant"
+"109","Detect Mirai-like botnet infecting smart city IoT sensors and cameras","technical","en","Mirai","botnet","Exploitation of Remote Services","T1210","Detect_Mirai_IoT_Botnet","rule Detect_Mirai_IoT_Botnet : botnet iot mirai
+{
+    meta:
+        description = ""Detects Mirai botnet IoT malware spreading via Telnet brute-force""
+        author      = ""Student Dataset""
+        date        = ""2026-01-15""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1210/""
+
+    strings:
+        // BusyBox environment (embedded Linux)
+        $busybox = ""/bin/busybox"" wide ascii
+
+        // Mirai string marker
+        $mirai   = ""MIRAI"" wide ascii
+
+        // Telnet brute-force marker
+        $telnet  = ""telnet"" nocase wide ascii
+
+        // Kill competing malware
+        $kill    = ""kill""   wide ascii
+
+        // Shell execution for persistence
+        $exec    = ""/bin/sh"" wide ascii
+
+        // Mirai table entry hex
+        $hex1    = { 4D 49 52 41 49 }
+
+    condition:
+        filesize < 500KB and
+        $busybox and
+        ($mirai or $hex1) and
+        $telnet and
+        $kill and
+        $exec
+}","malicious","hard","synthetic_scenario_variant"
+"110","Détecter un botnet de type Mirai infectant les capteurs IoT d'une ville intelligente","technical_fr","fr","Mirai","botnet","Exploitation of Remote Services","T1210","Detect_Mirai_IoT_Botnet","rule Detect_Mirai_IoT_Botnet : botnet iot mirai
+{
+    meta:
+        description = ""Detects Mirai botnet IoT malware spreading via Telnet brute-force""
+        author      = ""Student Dataset""
+        date        = ""2026-01-15""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1210/""
+
+    strings:
+        // BusyBox environment (embedded Linux)
+        $busybox = ""/bin/busybox"" wide ascii
+
+        // Mirai string marker
+        $mirai   = ""MIRAI"" wide ascii
+
+        // Telnet brute-force marker
+        $telnet  = ""telnet"" nocase wide ascii
+
+        // Kill competing malware
+        $kill    = ""kill""   wide ascii
+
+        // Shell execution for persistence
+        $exec    = ""/bin/sh"" wide ascii
+
+        // Mirai table entry hex
+        $hex1    = { 4D 49 52 41 49 }
+
+    condition:
+        filesize < 500KB and
+        $busybox and
+        ($mirai or $hex1) and
+        $telnet and
+        $kill and
+        $exec
+}","malicious","hard","synthetic_scenario_variant"
+"111","Detect screenshot spyware silently monitoring student computers in a school lab","informal","en","Screenshot Spyware","spyware","Screen Capture","T1113","Detect_Screenshot_Spyware","rule Detect_Screenshot_Spyware : spyware screen_capture
+{
+    meta:
+        description = ""Detects spyware capturing screenshots and uploading via FTP""
+        author      = ""Student Dataset""
+        date        = ""2026-01-14""
+        severity    = ""high""
+        reference   = ""https://attack.mitre.org/techniques/T1113/""
+
+    strings:
+        // GDI screenshot API chain
+        $api1 = ""BitBlt""                  wide ascii
+        $api2 = ""GetDesktopWindow""        wide ascii
+        $api3 = ""CreateCompatibleBitmap""  wide ascii
+        $api4 = ""CreateCompatibleDC""      wide ascii
+
+        // Upload channel
+        $ftp  = ""ftp""    nocase wide ascii
+        $send = ""WSASend"" wide ascii
+
+    condition:
+        pe.is_pe and
+        filesize < 10MB and
+        3 of ($api1, $api2, $api3, $api4) and
+        ($ftp or $send)
+}","malicious","medium","synthetic_scenario_variant"
+"112","Détecter un RAT ouvrant une porte dérobée sur des postes d'entreprise via le port 4444","formal_fr","fr","Generic RAT","rat","Remote Access Software","T1219","Detect_RAT_Backdoor_Shell","rule Detect_RAT_Backdoor_Shell : rat backdoor
+{
+    meta:
+        description = ""Detects Remote Access Trojan opening reverse shell on port 4444""
+        author      = ""Student Dataset""
+        date        = ""2026-01-15""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1219/""
+
+    strings:
+        // Port 4444 in little-endian hex
+        $port   = { 5C 11 }
+
+        // Socket API calls
+        $bind   = ""bind""   wide ascii
+        $listen = ""listen"" wide ascii
+        $accept = ""accept"" wide ascii
+
+        // Shell execution
+        $shell  = ""cmd.exe""  wide ascii
+        $sh2    = ""/bin/sh""  wide ascii
+
+        // Netcat tool reference
+        $nc     = ""netcat"" nocase
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        $bind and $listen and $accept and
+        ($shell or $sh2 or $nc)
+}","malicious","medium","synthetic_scenario_variant"
+"113","Detect disk wiper malware targeting industrial control systems and SCADA","technical","en","MBR Wiper","wiper","Disk Wipe","T1561.002","Detect_MBR_Wiper_Malware","rule Detect_MBR_Wiper_Malware : wiper destructive mbr
+{
+    meta:
+        description = ""Detects MBR wiper malware overwriting Master Boot Record""
+        author      = ""Student Dataset""
+        date        = ""2026-01-20""
+        severity    = ""critical""
+        reference   = ""https://attack.mitre.org/techniques/T1561/002/""
+
+    strings:
+        // Raw disk access via device path
+        $disk   = ""\\.\PhysicalDrive0"" wide ascii
+
+        // Write API to overwrite MBR
+        $write  = ""WriteFile""           wide ascii
+
+        // Device control for low-level disk operations
+        $ioctl  = ""DeviceIoControl""     wide ascii
+
+        // Zero-fill pattern (512 bytes overwrite signature)
+        $zeros  = { 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+                    00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 }
+
+        // Known wiper marker strings
+        $wiper1 = ""Shamoon""  nocase
+        $wiper2 = ""Destover"" nocase
+
+    condition:
+        pe.is_pe and
+        filesize < 5MB and
+        $disk and
+        ($write or $ioctl) and
+        ($zeros or $wiper1 or $wiper2)
+}","malicious","hard","synthetic_scenario_variant"
+"114","Détecter XMRig déployé illégalement dans un environnement cloud pour miner du Monero","technical_fr","fr","XMRig","cryptominer","Resource Hijacking","T1496","Detect_XMRig_Monero_Miner","rule Detect_XMRig_Monero_Miner : cryptominer xmrig
+{
+    meta:
+        description = ""Detects XMRig Monero CPU miner binary and configuration""
+        author      = ""Student Dataset""
+        date        = ""2026-01-15""
+        severity    = ""medium""
+        reference   = ""https://attack.mitre.org/techniques/T1496/""
+
+    strings:
+        // XMRig binary name
+        $name1   = ""xmrig""            nocase wide ascii
+
+        // Monero coin reference
+        $coin    = ""monero""           nocase wide ascii
+
+        // Mining pool domains
+        $pool1   = ""pool.minexmr.com"" wide ascii
+        $pool2   = ""xmrpool.eu""       wide ascii
+
+        // XMRig donate address
+        $donate  = ""donate.xmrig.com"" wide ascii
+
+        // CPU usage flag
+        $cpuflag = ""--max-cpu-usage""  wide ascii
+
+    condition:
+        filesize < 20MB and
+        ($name1 or $donate) and
+        ($coin or $pool1 or $pool2 or $cpuflag)
+}","malicious","easy","synthetic_scenario_variant"

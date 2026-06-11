@@ -1,0 +1,1151 @@
+[
+  {
+    "id": "RAN-001",
+    "description": "Ransomware encrypting files using AES-256 and deleting shadow copies to prevent recovery",
+    "malware_family": "LockBit",
+    "malware_type": "ransomware",
+    "behavior_summary": [
+      "file encryption",
+      "AES-256 usage",
+      "shadow copy deletion",
+      "ransom note drop"
+    ],
+    "attack_stage": "post-exploitation",
+    "ioc": [
+      ".locked",
+      "ransom_note.txt",
+      "vssadmin delete shadows",
+      "LockBit_ransom.hta"
+    ],
+    "yara_rule": "rule LockBit_AES256 {\n    meta:\n        description = \"LockBit ransomware using AES-256 encryption\"\n        author = \"YARA-RAG-Team\"\n        confidence = \"high\"\n    strings:\n        $aes = \"AES\" nocase\n        $shadow = \"vssadmin delete shadows\" nocase\n        $ext = \".locked\" nocase\n        $note = \"ransom_note\" nocase\n    condition:\n        ($aes and $shadow) or ($ext and $note) and filesize < 10MB\n}",
+    "rule_conditions": [
+      "filesize",
+      "strings",
+      "all of them"
+    ],
+    "strings_or_patterns": [
+      "AES",
+      "vssadmin",
+      ".locked",
+      "ransom_note",
+      "encrypt"
+    ],
+    "source_document": "cisa_lockbit_2023.pdf",
+    "confidence": "high",
+    "notes_on_fp": "May match legitimate encryption tools using AES — check shadow copy deletion",
+    "language": "en",
+    "embedding_text": "LockBit ransomware AES-256 file encryption shadow copy deletion ransom note .locked vssadmin post-exploitation"
+  },
+  {
+    "id": "RAN-002",
+    "description": "WannaCry ransomware exploiting EternalBlue SMB vulnerability to spread across networks and encrypt files",
+    "malware_family": "WannaCry",
+    "malware_type": "ransomware",
+    "behavior_summary": [
+      "SMB exploitation",
+      "EternalBlue",
+      "file encryption",
+      "network propagation",
+      "bitcoin demand"
+    ],
+    "attack_stage": "lateral-movement",
+    "ioc": [
+      ".WNCRY",
+      "!Please Read Me!.txt",
+      "tasksche.exe",
+      "wannacry_mutex"
+    ],
+    "yara_rule": "rule WannaCry_Ransomware {\n    meta:\n        description = \"WannaCry ransomware via EternalBlue\"\n        confidence = \"high\"\n    strings:\n        $smb = \"SMB\" nocase\n        $ext = \".WNCRY\" nocase\n        $task = \"tasksche.exe\" nocase\n        $btc = \"bitcoin\" nocase\n    condition:\n        ($ext or $task) and $btc and filesize < 5MB\n}",
+    "rule_conditions": [
+      "filesize",
+      "strings",
+      "2 of them"
+    ],
+    "strings_or_patterns": [
+      "WNCRY",
+      "tasksche",
+      "bitcoin",
+      "EternalBlue",
+      "SMB"
+    ],
+    "source_document": "wannacry_analysis_2017.pdf",
+    "confidence": "high",
+    "notes_on_fp": "WNCRY extension is unique — low false positive risk",
+    "language": "en",
+    "embedding_text": "WannaCry EternalBlue SMB ransomware network propagation file encryption bitcoin WNCRY tasksche lateral movement"
+  },
+  {
+    "id": "RAN-003",
+    "description": "Ryuk ransomware targeting enterprise networks, using Tor for C2 communication and demanding large ransoms",
+    "malware_family": "Ryuk",
+    "malware_type": "ransomware",
+    "behavior_summary": [
+      "Tor C2 communication",
+      "enterprise targeting",
+      "large ransom demand",
+      "file encryption",
+      "backup deletion"
+    ],
+    "attack_stage": "post-exploitation",
+    "ioc": [
+      ".ryk",
+      "RyukReadMe.txt",
+      ".onion",
+      "HERMES"
+    ],
+    "yara_rule": "rule Ryuk_Enterprise_Ransomware {\n    meta:\n        description = \"Ryuk ransomware with Tor C2\"\n        confidence = \"high\"\n    strings:\n        $ext = \".ryk\" nocase\n        $note = \"RyukReadMe\" nocase\n        $tor = \".onion\" nocase\n        $hermes = \"HERMES\" nocase\n    condition:\n        ($ext or $note) and ($tor or $hermes)\n}",
+    "rule_conditions": [
+      "strings",
+      "2 of them"
+    ],
+    "strings_or_patterns": [
+      ".ryk",
+      "RyukReadMe",
+      ".onion",
+      "HERMES",
+      "ransom"
+    ],
+    "source_document": "ryuk_threat_intel_2020.pdf",
+    "confidence": "high",
+    "notes_on_fp": "HERMES string unique to Ryuk family",
+    "language": "en",
+    "embedding_text": "Ryuk ransomware enterprise Tor C2 onion communication file encryption backup deletion RyukReadMe .ryk HERMES"
+  },
+  {
+    "id": "RAN-004",
+    "description": "Ransomware displaying a lock screen demanding Bitcoin payment and preventing system access",
+    "malware_family": "Unknown",
+    "malware_type": "ransomware",
+    "behavior_summary": [
+      "lock screen display",
+      "bitcoin payment demand",
+      "system access prevention"
+    ],
+    "attack_stage": "post-exploitation",
+    "ioc": [
+      "bitcoin",
+      "BTC wallet address",
+      "lockscreen.exe"
+    ],
+    "yara_rule": "rule LockScreen_Bitcoin_Ransomware {\n    meta:\n        description = \"Lock screen ransomware demanding Bitcoin\"\n    strings:\n        $btc = \"bitcoin\" nocase\n        $lock = \"locked\" nocase\n        $ransom = \"ransom\" nocase\n        $wallet = /[13][a-km-zA-HJ-NP-Z1-9]{25,34}/\n    condition:\n        2 of ($btc, $lock, $ransom) and filesize < 2MB\n}",
+    "rule_conditions": [
+      "2 of them",
+      "filesize"
+    ],
+    "strings_or_patterns": [
+      "bitcoin",
+      "locked",
+      "ransom",
+      "BTC",
+      "wallet"
+    ],
+    "source_document": "lockscreen_analysis.pdf",
+    "confidence": "medium",
+    "notes_on_fp": "Bitcoin regex may match legitimate crypto apps",
+    "language": "en",
+    "embedding_text": "lockscreen ransomware bitcoin payment demand BTC wallet system access prevention post-exploitation"
+  },
+  {
+    "id": "TRO-001",
+    "description": "Banking trojan stealing credentials by injecting malicious code into browser processes",
+    "malware_family": "Zeus",
+    "malware_type": "trojan",
+    "behavior_summary": [
+      "browser injection",
+      "credential theft",
+      "form grabbing",
+      "keylogging",
+      "C2 communication"
+    ],
+    "attack_stage": "credential-access",
+    "ioc": [
+      "login.php",
+      "password",
+      "card number",
+      "Zeus_mutex"
+    ],
+    "yara_rule": "rule Zeus_Banking_Trojan {\n    meta:\n        description = \"Zeus banking trojan with browser injection\"\n        confidence = \"high\"\n    strings:\n        $inject = \"CreateRemoteThread\" nocase\n        $browser = \"chrome.exe\" nocase\n        $form = \"login.php\" nocase\n        $pass = \"password\" nocase\n    condition:\n        $inject and ($browser or $form) and $pass and filesize < 3MB\n}",
+    "rule_conditions": [
+      "all of them",
+      "filesize"
+    ],
+    "strings_or_patterns": [
+      "CreateRemoteThread",
+      "chrome.exe",
+      "login.php",
+      "password",
+      "form grab"
+    ],
+    "source_document": "zeus_banking_trojan_report.pdf",
+    "confidence": "high",
+    "notes_on_fp": "CreateRemoteThread used by legitimate debuggers — combine with other indicators",
+    "language": "en",
+    "embedding_text": "Zeus banking trojan browser injection credential theft form grabbing keylogging CreateRemoteThread chrome.exe credential-access"
+  },
+  {
+    "id": "TRO-002",
+    "description": "Remote Access Trojan providing full control over infected machine including webcam and keylogging",
+    "malware_family": "DarkComet",
+    "malware_type": "trojan",
+    "behavior_summary": [
+      "remote desktop access",
+      "webcam capture",
+      "keylogging",
+      "file transfer",
+      "persistence via registry"
+    ],
+    "attack_stage": "command-and-control",
+    "ioc": [
+      "RemoteDesktop",
+      "webcam",
+      "keylog",
+      "HKCU\\Software\\DC3_FUDCRYPT"
+    ],
+    "yara_rule": "rule DarkComet_RAT {\n    meta:\n        description = \"DarkComet Remote Access Trojan\"\n        confidence = \"high\"\n    strings:\n        $rat = \"RemoteDesktop\" nocase\n        $cam = \"webcam\" nocase\n        $key = \"keylog\" nocase\n        $reg = \"DC3_FUDCRYPT\" nocase\n    condition:\n        2 of them and filesize < 5MB\n}",
+    "rule_conditions": [
+      "2 of them",
+      "filesize"
+    ],
+    "strings_or_patterns": [
+      "RemoteDesktop",
+      "webcam",
+      "keylog",
+      "DC3_FUDCRYPT",
+      "RAT"
+    ],
+    "source_document": "darkcomet_analysis.pdf",
+    "confidence": "high",
+    "notes_on_fp": "DC3_FUDCRYPT string is unique to DarkComet",
+    "language": "en",
+    "embedding_text": "DarkComet RAT remote access trojan webcam keylogging registry persistence remote desktop command-and-control"
+  },
+  {
+    "id": "TRO-003",
+    "description": "Trojan using PowerShell to download and execute payload from remote server",
+    "malware_family": "Emotet",
+    "malware_type": "trojan",
+    "behavior_summary": [
+      "PowerShell execution",
+      "remote payload download",
+      "persistence",
+      "email spam propagation"
+    ],
+    "attack_stage": "initial-access",
+    "ioc": [
+      "Invoke-WebRequest",
+      "powershell -enc",
+      "cmd.exe /c",
+      "Emotet_mutex"
+    ],
+    "yara_rule": "rule Emotet_PowerShell_Dropper {\n    meta:\n        description = \"Emotet trojan using PowerShell downloader\"\n        confidence = \"high\"\n    strings:\n        $ps = \"powershell\" nocase\n        $enc = \"-enc\" nocase\n        $iwr = \"Invoke-WebRequest\" nocase\n        $cmd = \"cmd.exe /c\" nocase\n    condition:\n        $ps and ($enc or $iwr) and $cmd\n}",
+    "rule_conditions": [
+      "strings",
+      "all of them"
+    ],
+    "strings_or_patterns": [
+      "powershell",
+      "-enc",
+      "Invoke-WebRequest",
+      "cmd.exe",
+      "DownloadString"
+    ],
+    "source_document": "emotet_threat_analysis.pdf",
+    "confidence": "high",
+    "notes_on_fp": "PowerShell commands used legitimately — combine all indicators",
+    "language": "en",
+    "embedding_text": "Emotet trojan PowerShell encoded command Invoke-WebRequest download payload persistence email spam initial-access"
+  },
+  {
+    "id": "TRO-004",
+    "description": "Trojan establishing reverse shell using netcat and connecting back to attacker infrastructure",
+    "malware_family": "Unknown",
+    "malware_type": "trojan",
+    "behavior_summary": [
+      "reverse shell",
+      "netcat usage",
+      "persistent backdoor",
+      "outbound connection"
+    ],
+    "attack_stage": "command-and-control",
+    "ioc": [
+      "nc.exe",
+      "cmd.exe /c",
+      "reverse_shell",
+      "-e cmd"
+    ],
+    "yara_rule": "rule Reverse_Shell_Trojan {\n    meta:\n        description = \"Trojan establishing reverse shell via netcat\"\n    strings:\n        $nc = \"nc.exe\" nocase\n        $rev = \"-e cmd\" nocase\n        $cmd = \"cmd.exe /c\" nocase\n        $shell = \"reverse_shell\" nocase\n    condition:\n        ($nc and $rev) or ($cmd and $shell)\n}",
+    "rule_conditions": [
+      "strings",
+      "combination"
+    ],
+    "strings_or_patterns": [
+      "nc.exe",
+      "-e cmd",
+      "cmd.exe",
+      "reverse shell",
+      "netcat"
+    ],
+    "source_document": "reverse_shell_techniques.pdf",
+    "confidence": "medium",
+    "notes_on_fp": "nc.exe used by legitimate network admins",
+    "language": "en",
+    "embedding_text": "reverse shell netcat trojan cmd.exe persistent backdoor outbound connection command-and-control attacker infrastructure"
+  },
+  {
+    "id": "SPY-001",
+    "description": "Spyware injecting DLL into explorer.exe via CreateRemoteThread to monitor user activity in real-time",
+    "malware_family": "FinSpy",
+    "malware_type": "spyware",
+    "behavior_summary": [
+      "DLL injection",
+      "process injection into explorer.exe",
+      "user activity monitoring",
+      "screenshot capture"
+    ],
+    "attack_stage": "collection",
+    "ioc": [
+      "CreateRemoteThread",
+      "VirtualAllocEx",
+      "WriteProcessMemory",
+      "explorer.exe"
+    ],
+    "yara_rule": "rule FinSpy_DLL_Injection {\n    meta:\n        description = \"FinSpy spyware with DLL injection into explorer.exe\"\n        confidence = \"high\"\n    strings:\n        $crt = \"CreateRemoteThread\" nocase\n        $virt = \"VirtualAllocEx\" nocase\n        $write = \"WriteProcessMemory\" nocase\n        $target = \"explorer.exe\" nocase\n    condition:\n        3 of them and filesize < 2MB\n}",
+    "rule_conditions": [
+      "3 of them",
+      "filesize"
+    ],
+    "strings_or_patterns": [
+      "CreateRemoteThread",
+      "VirtualAllocEx",
+      "WriteProcessMemory",
+      "explorer.exe",
+      "LoadLibrary"
+    ],
+    "source_document": "finspy_analysis_citizenlab.pdf",
+    "confidence": "high",
+    "notes_on_fp": "Combination of 3 API calls reduces false positive rate significantly",
+    "language": "en",
+    "embedding_text": "FinSpy spyware DLL injection CreateRemoteThread VirtualAllocEx explorer.exe user activity monitoring screenshot collection"
+  },
+  {
+    "id": "SPY-002",
+    "description": "Spyware taking periodic screenshots and exfiltrating them via HTTP POST to remote server",
+    "malware_family": "Unknown",
+    "malware_type": "spyware",
+    "behavior_summary": [
+      "periodic screenshot",
+      "HTTP exfiltration",
+      "screen capture",
+      "data theft"
+    ],
+    "attack_stage": "exfiltration",
+    "ioc": [
+      "BitBlt",
+      "GetDC",
+      "InternetOpenUrl",
+      "POST /upload"
+    ],
+    "yara_rule": "rule Screenshot_Exfil_Spyware {\n    meta:\n        description = \"Spyware capturing and exfiltrating screenshots\"\n    strings:\n        $blt = \"BitBlt\" nocase\n        $dc = \"GetDC\" nocase\n        $http = \"InternetOpenUrl\" nocase\n        $post = \"POST\" nocase\n    condition:\n        ($blt and $dc) and ($http or $post) and filesize < 3MB\n}",
+    "rule_conditions": [
+      "combination",
+      "filesize"
+    ],
+    "strings_or_patterns": [
+      "BitBlt",
+      "GetDC",
+      "InternetOpenUrl",
+      "POST",
+      "screenshot"
+    ],
+    "source_document": "spyware_screenshot_report.pdf",
+    "confidence": "medium",
+    "notes_on_fp": "BitBlt used by legitimate screen capture tools",
+    "language": "en",
+    "embedding_text": "spyware screenshot BitBlt GetDC HTTP POST exfiltration screen capture data theft periodic capture"
+  },
+  {
+    "id": "SPY-003",
+    "description": "Commercial spyware using kernel-level rootkit to hide processes and intercept system calls",
+    "malware_family": "Pegasus",
+    "malware_type": "spyware",
+    "behavior_summary": [
+      "kernel rootkit",
+      "SSDT hooking",
+      "process hiding",
+      "syscall interception",
+      "zero-click exploit"
+    ],
+    "attack_stage": "defense-evasion",
+    "ioc": [
+      "ZwQuerySystemInformation",
+      "SSDT",
+      "KeServiceDescriptorTable",
+      "NtSetInformationThread"
+    ],
+    "yara_rule": "rule Pegasus_Kernel_Spyware {\n    meta:\n        description = \"Pegasus-like kernel spyware with SSDT hooking\"\n        confidence = \"medium\"\n    strings:\n        $ssdt = \"KeServiceDescriptorTable\" nocase\n        $zwq = \"ZwQuerySystemInformation\" nocase\n        $hook = \"SSDT\" nocase\n        $hide = \"NtSetInformationThread\" nocase\n    condition:\n        2 of them\n}",
+    "rule_conditions": [
+      "2 of them"
+    ],
+    "strings_or_patterns": [
+      "SSDT",
+      "ZwQuerySystemInformation",
+      "KeServiceDescriptorTable",
+      "NtSetInformationThread"
+    ],
+    "source_document": "pegasus_technical_analysis.pdf",
+    "confidence": "medium",
+    "notes_on_fp": "SSDT hooking also used by security tools and AV software",
+    "language": "en",
+    "embedding_text": "Pegasus spyware kernel rootkit SSDT hooking process hiding syscall interception zero-click defense-evasion"
+  },
+  {
+    "id": "WOR-001",
+    "description": "Network worm propagating via SMB shares by exploiting unprotected network connections",
+    "malware_family": "NotPetya",
+    "malware_type": "worm",
+    "behavior_summary": [
+      "SMB propagation",
+      "network share enumeration",
+      "credential harvesting",
+      "file encryption"
+    ],
+    "attack_stage": "lateral-movement",
+    "ioc": [
+      "NetShareEnum",
+      "WNetAddConnection2",
+      "ADMIN$",
+      "psexec"
+    ],
+    "yara_rule": "rule NotPetya_SMB_Worm {\n    meta:\n        description = \"NotPetya worm propagating via SMB\"\n        confidence = \"high\"\n    strings:\n        $smb = \"NetShareEnum\" nocase\n        $admin = \"ADMIN$\" nocase\n        $wnet = \"WNetAddConnection2\" nocase\n        $psexec = \"psexec\" nocase\n    condition:\n        2 of them and filesize < 1MB\n}",
+    "rule_conditions": [
+      "2 of them",
+      "filesize"
+    ],
+    "strings_or_patterns": [
+      "NetShareEnum",
+      "ADMIN$",
+      "WNetAddConnection2",
+      "psexec",
+      "SMB"
+    ],
+    "source_document": "notpetya_analysis_2017.pdf",
+    "confidence": "high",
+    "notes_on_fp": "NetShareEnum used by legitimate admin tools — check combination",
+    "language": "en",
+    "embedding_text": "NotPetya worm SMB propagation network share enumeration ADMIN$ WNetAddConnection2 credential harvesting lateral-movement"
+  },
+  {
+    "id": "WOR-002",
+    "description": "USB worm replicating via removable drives by creating autorun.inf and copying executable",
+    "malware_family": "Conficker",
+    "malware_type": "worm",
+    "behavior_summary": [
+      "USB propagation",
+      "autorun.inf creation",
+      "removable drive detection",
+      "self-replication"
+    ],
+    "attack_stage": "initial-access",
+    "ioc": [
+      "autorun.inf",
+      "GetDriveType",
+      "REMOVABLE",
+      "DRIVE_REMOVABLE"
+    ],
+    "yara_rule": "rule USB_Autorun_Worm {\n    meta:\n        description = \"USB worm using autorun.inf for propagation\"\n        confidence = \"high\"\n    strings:\n        $auto = \"autorun.inf\" nocase\n        $drive = \"GetDriveType\" nocase\n        $rem = \"REMOVABLE\" nocase\n    condition:\n        $auto and ($drive or $rem)\n}",
+    "rule_conditions": [
+      "strings",
+      "combination"
+    ],
+    "strings_or_patterns": [
+      "autorun.inf",
+      "GetDriveType",
+      "REMOVABLE",
+      "CopyFile",
+      "self-replicate"
+    ],
+    "source_document": "conficker_usb_analysis.pdf",
+    "confidence": "high",
+    "notes_on_fp": "autorun.inf alone insufficient — combine with GetDriveType",
+    "language": "en",
+    "embedding_text": "Conficker USB worm autorun.inf removable drive GetDriveType self-replication initial-access propagation"
+  },
+  {
+    "id": "WOR-003",
+    "description": "Worm scanning IP ranges and exploiting port 445 to install itself on vulnerable machines",
+    "malware_family": "EternalBlue-Worm",
+    "malware_type": "worm",
+    "behavior_summary": [
+      "IP range scanning",
+      "port 445 exploitation",
+      "SMB vulnerability",
+      "self-installation"
+    ],
+    "attack_stage": "reconnaissance",
+    "ioc": [
+      "port 445",
+      "connect",
+      "CopyFile",
+      "MS17-010"
+    ],
+    "yara_rule": "rule EternalBlue_Scanner_Worm {\n    meta:\n        description = \"Worm scanning for vulnerable SMB on port 445\"\n        confidence = \"medium\"\n    strings:\n        $port = \"445\" ascii\n        $connect = \"connect\" nocase\n        $copy = \"CopyFile\" nocase\n        $ms17 = \"MS17-010\" nocase\n    condition:\n        $port and $connect and ($copy or $ms17)\n}",
+    "rule_conditions": [
+      "strings",
+      "combination"
+    ],
+    "strings_or_patterns": [
+      "445",
+      "connect",
+      "CopyFile",
+      "MS17-010",
+      "SMB"
+    ],
+    "source_document": "eternalblue_worm_report.pdf",
+    "confidence": "medium",
+    "notes_on_fp": "Port 445 string may appear in legitimate network tools",
+    "language": "en",
+    "embedding_text": "EternalBlue worm IP scanning port 445 SMB vulnerability MS17-010 self-installation reconnaissance exploitation"
+  },
+  {
+    "id": "BOT-001",
+    "description": "Botnet client connecting to IRC channel for command and control instructions",
+    "malware_family": "SDBot",
+    "malware_type": "botnet",
+    "behavior_summary": [
+      "IRC C2 communication",
+      "bot registration",
+      "DDoS capability",
+      "spam sending",
+      "persistence"
+    ],
+    "attack_stage": "command-and-control",
+    "ioc": [
+      "irc.server.com",
+      "JOIN #botnet",
+      "PRIVMSG",
+      "bot_mutex"
+    ],
+    "yara_rule": "rule SDBot_IRC_Botnet {\n    meta:\n        description = \"SDBot IRC-based botnet client\"\n        confidence = \"high\"\n    strings:\n        $irc = \"JOIN #\" nocase\n        $priv = \"PRIVMSG\" nocase\n        $nick = \"NICK\" nocase\n        $bot = \"botnet\" nocase\n    condition:\n        ($irc and $priv) or ($nick and $bot)\n}",
+    "rule_conditions": [
+      "combination"
+    ],
+    "strings_or_patterns": [
+      "JOIN #",
+      "PRIVMSG",
+      "NICK",
+      "botnet",
+      "IRC"
+    ],
+    "source_document": "sdbot_irc_analysis.pdf",
+    "confidence": "high",
+    "notes_on_fp": "IRC strings combined with botnet keyword = strong indicator",
+    "language": "en",
+    "embedding_text": "SDBot IRC botnet C2 communication JOIN channel PRIVMSG NICK DDoS spam persistence command-and-control"
+  },
+  {
+    "id": "BOT-002",
+    "description": "HTTP-based botnet using encrypted POST requests to receive commands from C2 panel",
+    "malware_family": "Necurs",
+    "malware_type": "botnet",
+    "behavior_summary": [
+      "HTTP C2 communication",
+      "encrypted POST",
+      "command polling",
+      "spam module",
+      "rootkit component"
+    ],
+    "attack_stage": "command-and-control",
+    "ioc": [
+      "POST /gate.php",
+      "bot_id",
+      "User-Agent: Mozilla",
+      "encrypted payload"
+    ],
+    "yara_rule": "rule Necurs_HTTP_Botnet {\n    meta:\n        description = \"Necurs HTTP botnet with encrypted C2\"\n        confidence = \"high\"\n    strings:\n        $gate = \"gate.php\" nocase\n        $bot_id = \"bot_id\" nocase\n        $post = \"POST\" nocase\n        $enc = { 83 EC 10 53 56 57 }\n    condition:\n        ($gate and $bot_id) or ($post and $enc)\n}",
+    "rule_conditions": [
+      "combination",
+      "hex pattern"
+    ],
+    "strings_or_patterns": [
+      "gate.php",
+      "bot_id",
+      "POST",
+      "encrypted",
+      "C2"
+    ],
+    "source_document": "necurs_botnet_analysis.pdf",
+    "confidence": "high",
+    "notes_on_fp": "gate.php combined with bot_id is highly specific",
+    "language": "en",
+    "embedding_text": "Necurs HTTP botnet encrypted POST gate.php bot_id command polling spam rootkit C2 communication"
+  },
+  {
+    "id": "BOT-003",
+    "description": "DDoS botnet launching UDP flood attacks on target infrastructure",
+    "malware_family": "Mirai",
+    "malware_type": "botnet",
+    "behavior_summary": [
+      "UDP flood DDoS",
+      "IoT targeting",
+      "default credential brute-force",
+      "TCP SYN flood"
+    ],
+    "attack_stage": "impact",
+    "ioc": [
+      "sendto",
+      "UDP_FLOOD",
+      "SYN_FLOOD",
+      "scanner thread"
+    ],
+    "yara_rule": "rule Mirai_DDoS_Botnet {\n    meta:\n        description = \"Mirai botnet DDoS capabilities\"\n        confidence = \"high\"\n    strings:\n        $udp = \"UDP_FLOOD\" nocase\n        $syn = \"SYN_FLOOD\" nocase\n        $scan = \"scanner\" nocase\n        $send = \"sendto\" nocase\n    condition:\n        ($udp or $syn) and ($scan or $send)\n}",
+    "rule_conditions": [
+      "combination"
+    ],
+    "strings_or_patterns": [
+      "UDP_FLOOD",
+      "SYN_FLOOD",
+      "scanner",
+      "sendto",
+      "DDoS"
+    ],
+    "source_document": "mirai_botnet_technical.pdf",
+    "confidence": "high",
+    "notes_on_fp": "UDP_FLOOD and SYN_FLOOD strings are very specific to DDoS malware",
+    "language": "en",
+    "embedding_text": "Mirai DDoS botnet UDP flood SYN flood IoT targeting scanner thread brute-force default credentials impact"
+  },
+  {
+    "id": "BAC-001",
+    "description": "Backdoor listening on port 4444 with bind shell executing received commands",
+    "malware_family": "Meterpreter",
+    "malware_type": "backdoor",
+    "behavior_summary": [
+      "bind shell",
+      "port 4444",
+      "command execution",
+      "persistence via service"
+    ],
+    "attack_stage": "command-and-control",
+    "ioc": [
+      "4444",
+      "bind",
+      "cmd.exe",
+      "shell_bind_tcp"
+    ],
+    "yara_rule": "rule Meterpreter_Bind_Shell {\n    meta:\n        description = \"Meterpreter-style bind shell on port 4444\"\n        confidence = \"high\"\n    strings:\n        $port = \"4444\" ascii\n        $bind = \"bind\" nocase\n        $cmd = \"cmd.exe\" nocase\n        $shell = \"shell_bind_tcp\" nocase\n    condition:\n        all of them and filesize < 1MB\n}",
+    "rule_conditions": [
+      "all of them",
+      "filesize"
+    ],
+    "strings_or_patterns": [
+      "4444",
+      "bind",
+      "cmd.exe",
+      "shell_bind_tcp",
+      "listen"
+    ],
+    "source_document": "meterpreter_analysis.pdf",
+    "confidence": "high",
+    "notes_on_fp": "shell_bind_tcp is Metasploit-specific — very reliable indicator",
+    "language": "en",
+    "embedding_text": "Meterpreter backdoor bind shell port 4444 cmd.exe shell_bind_tcp command execution persistence service command-and-control"
+  },
+  {
+    "id": "BAC-002",
+    "description": "Backdoor achieving persistence via Windows registry Run key modification",
+    "malware_family": "Unknown",
+    "malware_type": "backdoor",
+    "behavior_summary": [
+      "registry persistence",
+      "Run key modification",
+      "startup execution",
+      "hidden process"
+    ],
+    "attack_stage": "persistence",
+    "ioc": [
+      "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+      "RegSetValueEx",
+      "startup"
+    ],
+    "yara_rule": "rule Registry_Persistence_Backdoor {\n    meta:\n        description = \"Backdoor with registry Run key persistence\"\n        confidence = \"medium\"\n    strings:\n        $reg = \"Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run\" nocase\n        $set = \"RegSetValueEx\" nocase\n        $hkcu = \"HKCU\" nocase\n    condition:\n        ($reg and $set) or ($reg and $hkcu)\n}",
+    "rule_conditions": [
+      "combination"
+    ],
+    "strings_or_patterns": [
+      "CurrentVersion\\Run",
+      "RegSetValueEx",
+      "HKCU",
+      "HKLM",
+      "startup"
+    ],
+    "source_document": "registry_persistence_techniques.pdf",
+    "confidence": "medium",
+    "notes_on_fp": "Many legitimate programs also use Run key — check additional IOCs",
+    "language": "en",
+    "embedding_text": "backdoor registry persistence Run key HKCU RegSetValueEx startup execution hidden process Windows persistence"
+  },
+  {
+    "id": "BAC-003",
+    "description": "Backdoor using DNS tunneling to exfiltrate data by encoding information in DNS TXT queries",
+    "malware_family": "DNSCat2",
+    "malware_type": "backdoor",
+    "behavior_summary": [
+      "DNS tunneling",
+      "data exfiltration",
+      "TXT record abuse",
+      "C2 over DNS",
+      "base64 encoding"
+    ],
+    "attack_stage": "exfiltration",
+    "ioc": [
+      "DnsQuery",
+      "TXT",
+      "base64",
+      "dns_tunnel"
+    ],
+    "yara_rule": "rule DNSCat2_DNS_Tunnel {\n    meta:\n        description = \"DNSCat2 backdoor using DNS tunneling for C2\"\n        confidence = \"high\"\n    strings:\n        $dns = \"DnsQuery\" nocase\n        $txt = \"TXT\" ascii\n        $b64 = \"base64\" nocase\n        $tunnel = \"dns_tunnel\" nocase\n    condition:\n        $dns and ($txt or $b64)\n}",
+    "rule_conditions": [
+      "combination"
+    ],
+    "strings_or_patterns": [
+      "DnsQuery",
+      "TXT",
+      "base64",
+      "dns_tunnel",
+      "encode"
+    ],
+    "source_document": "dnscat2_analysis.pdf",
+    "confidence": "high",
+    "notes_on_fp": "DNS TXT + base64 combination is distinctive for DNS tunneling",
+    "language": "en",
+    "embedding_text": "DNSCat2 backdoor DNS tunneling TXT record base64 encoding C2 communication data exfiltration covert channel"
+  },
+  {
+    "id": "BAC-004",
+    "description": "Backdoor hiding in scheduled tasks for persistence and executing payload at regular intervals",
+    "malware_family": "Unknown",
+    "malware_type": "backdoor",
+    "behavior_summary": [
+      "scheduled task persistence",
+      "periodic execution",
+      "payload execution",
+      "LOLBins usage"
+    ],
+    "attack_stage": "persistence",
+    "ioc": [
+      "schtasks /create",
+      "SYSTEM",
+      "cmd.exe /c",
+      "Task Scheduler"
+    ],
+    "yara_rule": "rule Scheduled_Task_Backdoor {\n    meta:\n        description = \"Backdoor persisting via scheduled tasks\"\n    strings:\n        $scht = \"schtasks\" nocase\n        $create = \"/create\" nocase\n        $sys = \"SYSTEM\" nocase\n        $cmd = \"cmd.exe\" nocase\n    condition:\n        $scht and $create and ($sys or $cmd)\n}",
+    "rule_conditions": [
+      "combination"
+    ],
+    "strings_or_patterns": [
+      "schtasks",
+      "/create",
+      "SYSTEM",
+      "cmd.exe",
+      "Task Scheduler"
+    ],
+    "source_document": "scheduled_task_persistence.pdf",
+    "confidence": "medium",
+    "notes_on_fp": "Scheduled tasks are commonly used legitimately",
+    "language": "en",
+    "embedding_text": "backdoor scheduled task persistence schtasks create SYSTEM cmd.exe LOLBins periodic execution payload Windows"
+  },
+  {
+    "id": "CRY-001",
+    "description": "Cryptominer using XMRig to mine Monero by hijacking CPU resources",
+    "malware_family": "XMRig",
+    "malware_type": "cryptominer",
+    "behavior_summary": [
+      "Monero mining",
+      "CPU hijacking",
+      "stratum protocol",
+      "mining pool connection",
+      "high CPU usage"
+    ],
+    "attack_stage": "impact",
+    "ioc": [
+      "xmrig",
+      "stratum+tcp://",
+      "monero",
+      "pool.minexmr.com"
+    ],
+    "yara_rule": "rule XMRig_Cryptominer {\n    meta:\n        description = \"XMRig Monero cryptominer\"\n        confidence = \"high\"\n    strings:\n        $xmr = \"xmrig\" nocase\n        $stratum = \"stratum+tcp://\" nocase\n        $monero = \"monero\" nocase\n        $pool = \"pool.minexmr.com\" nocase\n    condition:\n        ($xmr or $stratum) and $monero\n}",
+    "rule_conditions": [
+      "combination"
+    ],
+    "strings_or_patterns": [
+      "xmrig",
+      "stratum+tcp",
+      "monero",
+      "minexmr",
+      "mining pool"
+    ],
+    "source_document": "xmrig_cryptominer_analysis.pdf",
+    "confidence": "high",
+    "notes_on_fp": "stratum+tcp is specific to mining protocols — reliable indicator",
+    "language": "en",
+    "embedding_text": "XMRig cryptominer Monero mining CPU hijacking stratum protocol pool connection minexmr high CPU usage impact"
+  },
+  {
+    "id": "CRY-002",
+    "description": "Browser-based cryptominer injecting JavaScript mining code into compromised websites",
+    "malware_family": "CoinHive",
+    "malware_type": "cryptominer",
+    "behavior_summary": [
+      "JavaScript injection",
+      "browser mining",
+      "website compromise",
+      "CPU usage via browser"
+    ],
+    "attack_stage": "impact",
+    "ioc": [
+      "coinhive.min.js",
+      "CoinHive.Anonymous",
+      "miner.start()",
+      "wasm"
+    ],
+    "yara_rule": "rule CoinHive_Browser_Miner {\n    meta:\n        description = \"CoinHive browser-based JavaScript cryptominer\"\n        confidence = \"high\"\n    strings:\n        $ch = \"coinhive\" nocase\n        $anon = \"CoinHive.Anonymous\" nocase\n        $start = \"miner.start\" nocase\n        $wasm = \"wasm\" nocase\n    condition:\n        ($ch or $anon) and $start\n}",
+    "rule_conditions": [
+      "combination"
+    ],
+    "strings_or_patterns": [
+      "coinhive",
+      "CoinHive.Anonymous",
+      "miner.start",
+      "wasm",
+      "JavaScript"
+    ],
+    "source_document": "coinhive_analysis.pdf",
+    "confidence": "high",
+    "notes_on_fp": "CoinHive.Anonymous is highly specific to this miner family",
+    "language": "en",
+    "embedding_text": "CoinHive browser cryptominer JavaScript injection website compromise CPU usage wasm miner.start browser mining"
+  },
+  {
+    "id": "CRY-003",
+    "description": "Cryptominer spreading via EternalBlue and installing XMRig on vulnerable Windows systems",
+    "malware_family": "WannaMine",
+    "malware_type": "cryptominer",
+    "behavior_summary": [
+      "EternalBlue exploitation",
+      "worm propagation",
+      "XMRig installation",
+      "fileless execution",
+      "WMI persistence"
+    ],
+    "attack_stage": "lateral-movement",
+    "ioc": [
+      "MS17-010",
+      "WMI",
+      "xmrig",
+      "fileless",
+      "PowerShell"
+    ],
+    "yara_rule": "rule WannaMine_Worm_Miner {\n    meta:\n        description = \"WannaMine cryptominer spreading via EternalBlue\"\n        confidence = \"high\"\n    strings:\n        $ms17 = \"MS17-010\" nocase\n        $wmi = \"Win32_Process\" nocase\n        $xmr = \"xmrig\" nocase\n        $ps = \"powershell\" nocase\n    condition:\n        ($ms17 or $wmi) and $xmr and $ps\n}",
+    "rule_conditions": [
+      "combination"
+    ],
+    "strings_or_patterns": [
+      "MS17-010",
+      "Win32_Process",
+      "xmrig",
+      "powershell",
+      "WMI"
+    ],
+    "source_document": "wannamine_analysis.pdf",
+    "confidence": "high",
+    "notes_on_fp": "WMI + xmrig combination is highly indicative",
+    "language": "en",
+    "embedding_text": "WannaMine cryptominer EternalBlue MS17-010 worm propagation XMRig WMI fileless PowerShell lateral-movement"
+  },
+  {
+    "id": "DRO-001",
+    "description": "Dropper disguised as PDF downloading and silently executing a remote payload",
+    "malware_family": "Unknown",
+    "malware_type": "dropper",
+    "behavior_summary": [
+      "PDF disguise",
+      "payload download",
+      "silent execution",
+      "UAC bypass"
+    ],
+    "attack_stage": "initial-access",
+    "ioc": [
+      "%PDF",
+      "MZ",
+      "WinExec",
+      "URLDownloadToFile"
+    ],
+    "yara_rule": "rule Fake_PDF_Dropper {\n    meta:\n        description = \"Dropper disguised as PDF file\"\n        confidence = \"high\"\n    strings:\n        $pdf = \"%PDF\" ascii\n        $mz = \"MZ\" at 0\n        $exec = \"WinExec\" nocase\n        $dl = \"URLDownloadToFile\" nocase\n    condition:\n        $pdf and $mz and ($exec or $dl)\n}",
+    "rule_conditions": [
+      "combination",
+      "at 0"
+    ],
+    "strings_or_patterns": [
+      "%PDF",
+      "MZ",
+      "WinExec",
+      "URLDownloadToFile",
+      "ShellExecute"
+    ],
+    "source_document": "fake_pdf_dropper_analysis.pdf",
+    "confidence": "high",
+    "notes_on_fp": "MZ at offset 0 with PDF header is strong double-extension indicator",
+    "language": "en",
+    "embedding_text": "dropper fake PDF MZ header WinExec URLDownloadToFile silent execution UAC bypass initial-access payload download"
+  },
+  {
+    "id": "DRO-002",
+    "description": "Dropper using XOR obfuscation to hide payload and decrypt it in memory before execution",
+    "malware_family": "Unknown",
+    "malware_type": "dropper",
+    "behavior_summary": [
+      "XOR obfuscation",
+      "in-memory decryption",
+      "payload injection",
+      "anti-analysis"
+    ],
+    "attack_stage": "defense-evasion",
+    "ioc": [
+      "XOR loop",
+      "VirtualAlloc",
+      "CreateThread",
+      "hex pattern 33 C0"
+    ],
+    "yara_rule": "rule XOR_Obfuscated_Dropper {\n    meta:\n        description = \"Dropper with XOR obfuscation for payload hiding\"\n        confidence = \"medium\"\n    strings:\n        $xor_loop = { 33 C0 8A 04 0A 30 04 08 41 3B CB }\n        $valloc = \"VirtualAlloc\" nocase\n        $thread = \"CreateThread\" nocase\n    condition:\n        $xor_loop and ($valloc or $thread)\n}",
+    "rule_conditions": [
+      "hex pattern",
+      "combination"
+    ],
+    "strings_or_patterns": [
+      "33 C0 8A 04 0A",
+      "VirtualAlloc",
+      "CreateThread",
+      "XOR",
+      "decrypt"
+    ],
+    "source_document": "xor_dropper_analysis.pdf",
+    "confidence": "medium",
+    "notes_on_fp": "XOR hex pattern may appear in legitimate crypto libraries",
+    "language": "en",
+    "embedding_text": "dropper XOR obfuscation in-memory decryption VirtualAlloc CreateThread payload injection anti-analysis defense-evasion"
+  },
+  {
+    "id": "DRO-003",
+    "description": "Macro-based dropper in Office document executing PowerShell on open to download stage-2 payload",
+    "malware_family": "Qakbot",
+    "malware_type": "dropper",
+    "behavior_summary": [
+      "Office macro",
+      "AutoOpen execution",
+      "PowerShell download",
+      "stage-2 payload",
+      "document lure"
+    ],
+    "attack_stage": "initial-access",
+    "ioc": [
+      "AutoOpen",
+      "Shell(",
+      "powershell",
+      "Cmd.exe",
+      "Document_Open"
+    ],
+    "yara_rule": "rule Office_Macro_Dropper {\n    meta:\n        description = \"Qakbot Office macro dropper\"\n        confidence = \"high\"\n    strings:\n        $auto = \"AutoOpen\" nocase\n        $shell = \"Shell(\" nocase\n        $ps = \"powershell\" nocase\n        $doc = \"Document_Open\" nocase\n    condition:\n        ($auto or $doc) and ($shell or $ps)\n}",
+    "rule_conditions": [
+      "combination"
+    ],
+    "strings_or_patterns": [
+      "AutoOpen",
+      "Shell(",
+      "powershell",
+      "Document_Open",
+      "VBA macro"
+    ],
+    "source_document": "qakbot_macro_analysis.pdf",
+    "confidence": "high",
+    "notes_on_fp": "AutoOpen + PowerShell is unusual for legitimate Office docs",
+    "language": "en",
+    "embedding_text": "Qakbot Office macro dropper AutoOpen Document_Open Shell powershell download stage-2 payload document lure initial-access"
+  },
+  {
+    "id": "KEY-001",
+    "description": "Keylogger using SetWindowsHookEx to intercept keystrokes and exfiltrate via FTP",
+    "malware_family": "Unknown",
+    "malware_type": "keylogger",
+    "behavior_summary": [
+      "keystroke interception",
+      "SetWindowsHookEx hook",
+      "FTP exfiltration",
+      "log file creation"
+    ],
+    "attack_stage": "collection",
+    "ioc": [
+      "SetWindowsHookEx",
+      "WH_KEYBOARD_LL",
+      "FtpPutFile",
+      "keylog.txt"
+    ],
+    "yara_rule": "rule Keylogger_FTP_Exfil {\n    meta:\n        description = \"Keylogger with SetWindowsHookEx and FTP exfiltration\"\n        confidence = \"high\"\n    strings:\n        $hook = \"SetWindowsHookEx\" nocase\n        $kbd = \"WH_KEYBOARD_LL\" nocase\n        $ftp = \"FtpPutFile\" nocase\n        $log = \"keylog\" nocase\n    condition:\n        $hook and ($kbd or $ftp)\n}",
+    "rule_conditions": [
+      "combination"
+    ],
+    "strings_or_patterns": [
+      "SetWindowsHookEx",
+      "WH_KEYBOARD_LL",
+      "FtpPutFile",
+      "keylog",
+      "GetAsyncKeyState"
+    ],
+    "source_document": "keylogger_ftp_report.pdf",
+    "confidence": "high",
+    "notes_on_fp": "WH_KEYBOARD_LL is primarily used for keylogging",
+    "language": "en",
+    "embedding_text": "keylogger SetWindowsHookEx WH_KEYBOARD_LL FTP exfiltration FtpPutFile keystroke interception log file collection"
+  },
+  {
+    "id": "ROO-001",
+    "description": "Kernel rootkit hooking SSDT to hide malicious processes and files from system enumeration",
+    "malware_family": "Necurs-Rootkit",
+    "malware_type": "rootkit",
+    "behavior_summary": [
+      "SSDT hooking",
+      "process hiding",
+      "file hiding",
+      "kernel-level persistence",
+      "anti-detection"
+    ],
+    "attack_stage": "defense-evasion",
+    "ioc": [
+      "ZwQuerySystemInformation",
+      "SSDT",
+      "KeServiceDescriptorTable",
+      "NtQueryDirectoryFile"
+    ],
+    "yara_rule": "rule SSDT_Kernel_Rootkit {\n    meta:\n        description = \"Kernel rootkit with SSDT hooking for process hiding\"\n        confidence = \"medium\"\n    strings:\n        $ssdt = \"KeServiceDescriptorTable\" nocase\n        $zwq = \"ZwQuerySystemInformation\" nocase\n        $ntq = \"NtQueryDirectoryFile\" nocase\n    condition:\n        2 of them\n}",
+    "rule_conditions": [
+      "2 of them"
+    ],
+    "strings_or_patterns": [
+      "KeServiceDescriptorTable",
+      "ZwQuerySystemInformation",
+      "NtQueryDirectoryFile",
+      "SSDT",
+      "hook"
+    ],
+    "source_document": "necurs_rootkit_analysis.pdf",
+    "confidence": "medium",
+    "notes_on_fp": "SSDT hooks also used by security and AV software — verify context",
+    "language": "en",
+    "embedding_text": "kernel rootkit SSDT hooking KeServiceDescriptorTable ZwQuerySystemInformation process hiding file hiding anti-detection defense-evasion"
+  },
+  {
+    "id": "LEG-001",
+    "description": "Legitimate antivirus software scanning process memory to detect malware threats",
+    "malware_family": "N/A",
+    "malware_type": "legitimate",
+    "behavior_summary": [
+      "process memory scanning",
+      "threat detection",
+      "quarantine",
+      "signature matching"
+    ],
+    "attack_stage": "N/A",
+    "ioc": [
+      "Windows Defender",
+      "Kaspersky",
+      "ESET NOD32",
+      "ScanProcessMemory"
+    ],
+    "yara_rule": "rule Legit_Antivirus {\n    meta:\n        description = \"Legitimate AV software — NOT malware\"\n        confidence = \"high\"\n    strings:\n        $def = \"Windows Defender\" nocase\n        $kas = \"Kaspersky\" nocase\n        $eset = \"ESET NOD32\" nocase\n    condition:\n        any of them and not (\"ransom\" or \"bitcoin\" or \"DeleteShadowCopies\")\n}",
+    "rule_conditions": [
+      "any of them",
+      "not operator"
+    ],
+    "strings_or_patterns": [
+      "Windows Defender",
+      "Kaspersky",
+      "ESET",
+      "antivirus"
+    ],
+    "source_document": "N/A",
+    "confidence": "high",
+    "notes_on_fp": "This IS the false positive — exclude from malware matches",
+    "language": "en",
+    "embedding_text": "legitimate antivirus Windows Defender Kaspersky ESET NOD32 process memory scanning threat detection quarantine NOT malware"
+  },
+  {
+    "id": "LEG-002",
+    "description": "Legitimate PowerShell administration script for system monitoring and event log collection",
+    "malware_family": "N/A",
+    "malware_type": "legitimate",
+    "behavior_summary": [
+      "system monitoring",
+      "event log reading",
+      "performance metrics",
+      "admin automation"
+    ],
+    "attack_stage": "N/A",
+    "ioc": [
+      "Get-Process",
+      "Get-EventLog",
+      "monitoring",
+      "admin script"
+    ],
+    "yara_rule": "rule Legit_PS_Admin_Script {\n    meta:\n        description = \"Legitimate PowerShell admin script — NOT malware\"\n    strings:\n        $gp = \"Get-Process\" nocase\n        $gel = \"Get-EventLog\" nocase\n        $mon = \"monitoring\" nocase\n    condition:\n        2 of them and not (\"Invoke-WebRequest\" and \"hidden\")\n}",
+    "rule_conditions": [
+      "2 of them",
+      "not operator"
+    ],
+    "strings_or_patterns": [
+      "Get-Process",
+      "Get-EventLog",
+      "monitoring",
+      "Get-Counter"
+    ],
+    "source_document": "N/A",
+    "confidence": "high",
+    "notes_on_fp": "This IS the false positive — exclude from malware matches",
+    "language": "en",
+    "embedding_text": "legitimate PowerShell admin script Get-Process Get-EventLog monitoring system administration event log NOT malware"
+  },
+  {
+    "id": "LEG-003",
+    "description": "Legitimate debugger tool reading process memory for software development and reverse engineering",
+    "malware_family": "N/A",
+    "malware_type": "legitimate",
+    "behavior_summary": [
+      "process memory reading",
+      "debugging",
+      "reverse engineering",
+      "breakpoint setting"
+    ],
+    "attack_stage": "N/A",
+    "ioc": [
+      "OllyDbg",
+      "x64dbg",
+      "WinDbg",
+      "IDA Pro"
+    ],
+    "yara_rule": "rule Legit_Debugger_Tool {\n    meta:\n        description = \"Legitimate debugger — NOT malware\"\n    strings:\n        $olly = \"OllyDbg\" nocase\n        $x64 = \"x64dbg\" nocase\n        $windbg = \"WinDbg\" nocase\n        $ida = \"IDA Pro\" nocase\n    condition:\n        any of them\n}",
+    "rule_conditions": [
+      "any of them"
+    ],
+    "strings_or_patterns": [
+      "OllyDbg",
+      "x64dbg",
+      "WinDbg",
+      "IDA Pro",
+      "debugger"
+    ],
+    "source_document": "N/A",
+    "confidence": "high",
+    "notes_on_fp": "Debuggers legitimately read process memory — do not flag as malware",
+    "language": "en",
+    "embedding_text": "legitimate debugger OllyDbg x64dbg WinDbg IDA Pro process memory reading debugging reverse engineering NOT malware"
+  }
+]
