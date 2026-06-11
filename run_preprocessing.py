@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ==================================================
-PIPELINE NLP v2 — YARA RAG Generator
+PIPELINE NLP — YARA RAG Generator
 ==================================================
 """
 

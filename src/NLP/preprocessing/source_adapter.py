@@ -1,11 +1,4 @@
 # src/preprocessing/source_adapter.py
-# v4 — corrections critiques :
-#   1. Passe yara_text aux extracteurs de family/type
-#   2. _infer_type_from_yara() enrichi avec plus de patterns
-#   3. Filtre des faux IOCs dans les rapports par contexte
-#   4. _generate_desc_from_yara() gère le snake_case
-#   5. _parse_yara_conditions() capture les nombres
-#   6. Inférence attack_stage depuis le type de règle
 
 import re
 from typing import Dict, List, Optional

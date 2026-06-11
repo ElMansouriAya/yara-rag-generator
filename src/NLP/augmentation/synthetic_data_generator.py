@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ==================================================
-SYNTHETIC DATA GENERATOR — NLP Pipeline v1
+SYNTHETIC DATA GENERATOR — NLP Pipeline 
 ==================================================
 Génère des données synthétiques pour enrichir le dataset.
 

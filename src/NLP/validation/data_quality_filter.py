@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ==================================================
-DATA QUALITY FILTER — NLP Pipeline v1
+DATA QUALITY FILTER — NLP Pipeline 
 ==================================================
 Post-processing script that automatically filters and corrects
 the knowledge_base.json produced by run_preprocessing.py.

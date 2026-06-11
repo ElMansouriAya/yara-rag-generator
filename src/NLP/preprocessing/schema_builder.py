@@ -1,8 +1,5 @@
 # src/preprocessing/schema_builder.py
-# v3 — corrections :
-#   1. Passe filename et yara_text aux extracteurs (family + type)
-#   2. Description depuis YARA meta: si disponible
-#   3. ID prefix plus précis (exploit, generic, suspicious)
+
 
 import re
 from typing import Dict, List

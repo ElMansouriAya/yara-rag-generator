@@ -74,7 +74,7 @@ def load_single_file(file_path: Path, source_folder: str) -> Dict:
         }
         
     except Exception as e:
-        print(f"❌ Erreur sur {file_path}: {e}")
+        print(f" Erreur sur {file_path}: {e}")
         return None
 
 def extract_pdf(file_path: Path) -> str:

@@ -94,3 +94,5 @@ data/processed/filtered/**
 
 # Conserver uniquement le dataset enrichi pour le RAG
 !data/processed/filtered/dataset_production_enriched.json
+
+results/

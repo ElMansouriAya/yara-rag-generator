@@ -1,8 +1,4 @@
 # src/preprocessing/knowledge_base.py
-# v4 — corrections :
-#   1. Seuil famille abaissé à 20% (dataset YARA-dominant sans meta: family)
-#   2. Export des stats détaillées par source_type
-#   3. Alertes plus granulaires
 
 from pathlib import Path
 from typing import List, Dict

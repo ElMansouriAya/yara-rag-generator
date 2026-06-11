@@ -1,9 +1,9 @@
 {
-  "dataset_path": "C:\\Users\\hp\\Downloads\\yara-rag-generator\\data\\processed\\filtered\\dataset_production_enriched.json",
-  "dataset_hash": "ae7847b168432b904cb27b29357202e3",
+  "dataset_path": "C:\\Users\\HP\\yara-rag-generator\\data\\processed\\filtered\\dataset_production_enriched.json",
+  "dataset_hash": "4f9a97f4f5672440479abd1c48200585",
   "num_docs": 3166,
   "model": "all-MiniLM-L6-v2",
-  "built_at": "2026-06-11T13:34:05.491675",
-  "faiss_path": "C:\\Users\\hp\\Downloads\\yara-rag-generator\\data\\indexes\\faiss_index.bin",
-  "bm25_path": "C:\\Users\\hp\\Downloads\\yara-rag-generator\\data\\indexes\\bm25_index.pkl"
+  "built_at": "2026-06-11T18:02:51.954287",
+  "faiss_path": "C:\\Users\\HP\\yara-rag-generator\\data\\indexes\\faiss_index.bin",
+  "bm25_path": "C:\\Users\\HP\\yara-rag-generator\\data\\indexes\\bm25_index.pkl"
 }

@@ -1,10 +1,5 @@
 # src/preprocessing/text_cleaner.py
-# FIX v2 — corrections :
-#   1. Ne PAS supprimer les URLs (ce sont des IOCs potentiels)
-#   2. Ne PAS supprimer les dates (métadonnées importantes)
-#   3. Supprimer les artefacts de rendu PDF spécifiques
-#   4. Préserver la structure des règles YARA
-#   5. Meilleur nettoyage des sauts de ligne parasites
+
 
 import re
 

@@ -1,9 +1,4 @@
 # src/preprocessing/embedding_text_gen.py
-# v4 — corrections :
-#   1. Déduplication des parties (évite la répétition excessive)
-#   2. Pondération par source_type (YARA vs rapport)
-#   3. Inclusion systématique du nom de règle YARA
-#   4. Filtrage amélioré des strings hex
 
 import re
 from typing import Dict, List

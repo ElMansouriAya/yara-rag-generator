@@ -1,10 +1,5 @@
 # src/preprocessing/entity_extractor.py
-# v3 — corrections :
-#   1. extract_family_from_yara_meta() : lit le bloc meta: des règles YARA
-#   2. extract_family_from_rule_name() : parse les noms de règle structurés
-#   3. Blacklist "Detects" et autres faux positifs dans la famille
-#   4. extract_type_from_filename() : déduit le type depuis le nom de fichier
-#   5. validate_embedding_text() assouplie pour les règles YARA (hex-heavy)
+# Pipeline d'extraction d'entités (famille, type, attaque) depuis le texte brut et les règles YARA.:
 
 import re
 from typing import List, Dict, Optional, Tuple
