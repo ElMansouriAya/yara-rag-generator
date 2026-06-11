@@ -27,10 +27,10 @@ def test_retriever(name, fn, k=3):
     print(f"✅ {name} passed")
 
 if __name__ == "__main__":
-    from src.kb.knowledge_base          import KnowledgeBase
-    from src.retrieval.dense_retriever  import DenseRetriever
-    from src.retrieval.sparse_retriever import SparseRetriever
-    from src.retrieval.hybrid_retriever import HybridRetriever
+    from src.rag.kb.knowledge_base          import KnowledgeBase
+    from src.rag.retrieval.dense_retriever  import DenseRetriever
+    from src.rag.retrieval.sparse_retriever import SparseRetriever
+    from src.rag.retrieval.hybrid_retriever import HybridRetriever
 
     kb     = KnowledgeBase()
     dense  = DenseRetriever(kb)

@@ -20,8 +20,8 @@ INVALID_RULE = "rule Broken { strings: $a = \"test\" }"
 HALLUCIN_RULE = "rule Bad { strings: $a = \"x\" condition: deleteshadowcopy() }"
 
 if __name__ == "__main__":
-    from src.agents.query_analyzer   import QueryAnalyzer
-    from src.agents.validation_agent import ValidationAgent
+    from src.rag.agents.query_analyzer   import QueryAnalyzer
+    from src.rag.agents.validation_agent import ValidationAgent
 
     qa = QueryAnalyzer()
     va = ValidationAgent()

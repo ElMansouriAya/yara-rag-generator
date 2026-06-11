@@ -28,10 +28,10 @@ from pathlib import Path
 ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, ROOT)
 
-from src.kb.knowledge_base      import KnowledgeBase
-from src.pipeline.pipeline      import YARAPipeline
-from src.evaluation.metrics     import evaluate_result, average_metrics
-from src.evaluation.yara_validator import validate
+from src.rag.kb.knowledge_base      import KnowledgeBase
+from src.rag.pipeline.pipeline      import YARAPipeline
+from src.rag.evaluation.metrics     import evaluate_result, average_metrics
+from src.rag.evaluation.yara_validator import validate
 
 # ── Test queries + references ────────────────────────────────────────────────
 TEST_QUERIES = [
@@ -56,11 +56,11 @@ REFERENCES = [
     'rule Fake_PDF_Drop { strings: $pdf="%PDF" nocase $exec="WinExec" nocase condition: $pdf and $exec }',
 ]
 
-MODES   = ["baseline", "classic", "hybrid", "agentic"]
+MODES   = ["classic", "hybrid", "agentic"]
 MODELS  = {
-    "qwen"   : "src.generation.llm_qwen.QwenLLM",
-    "mistral": "src.generation.llm_mistral.MistralLLM",
-    "flan"   : "src.generation.llm_flan.FlanLLM",
+    "qwen"   : "src.rag.generation.llm_qwen.QwenLLM",
+    "mistral": "src.rag.generation.llm_mistral.MistralLLM",
+    "flan"   : "src.rag.generation.llm_flan.FlanLLM",
 }
 
 

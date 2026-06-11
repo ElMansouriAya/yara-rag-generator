@@ -71,11 +71,12 @@ class YARARAGAPI:
         self._llm        = _load_llm(model)
         self._kb         = KnowledgeBase(dataset_path)
         self._pipeline   = YARAPipeline(llm=self._llm, kb=self._kb)
+        self._default_mode = "agentic"
         print(f"[API] Ready — {len(self._kb)} documents loaded")
 
     # ── Core methods ─────────────────────────────────────────────────────────
 
-    def generate(self, query: str, mode: str = "agentic") -> dict:
+    def generate(self, query: str, mode: str = None) -> dict:
         """
         Generate a YARA rule from a natural language threat description.
 
@@ -244,6 +245,20 @@ class YARARAGAPI:
         self._model_name = model_name
         self._pipeline.set_llm(self._llm)
         print(f"[API] Switched to model: {model_name}")
+
+
+    def use_mode(self, mode: str) -> None:
+        """
+        Set the default RAG mode for all subsequent generate() calls.
+
+        Parameters
+        ----------
+        mode : "agentic" | "hybrid" | "classic" | "baseline"
+        """
+        assert mode in AVAILABLE_MODES, \
+            f"Unknown mode '{mode}'. Choose from {AVAILABLE_MODES}"
+        self._default_mode = mode
+        print(f"[API] Default mode set to: {mode}")
 
     # ── Internal helpers ─────────────────────────────────────────────────────
 

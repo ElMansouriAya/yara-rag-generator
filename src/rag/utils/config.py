@@ -1,22 +1,40 @@
 """Global configuration — paths, model names, parameters."""
 import os
+from pathlib import Path
 
-BASE_DIR     = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+def find_project_root():
+    """Find project root by looking for data/ directory."""
+    current = Path(__file__).resolve()
+    
+    for parent in current.parents:
+        if (parent / "data").exists():
+            return str(parent)
+        if parent == parent.parent:
+            break
+    
+    return str(current.parent.parent.parent.parent)
+
+BASE_DIR = find_project_root()
 DATA_DIR     = os.path.join(BASE_DIR, "data")
 
 # ── Dataset paths ──────────────────────────────────────────────────────────
 # MVP dataset (dev/testing — 32 entries)
-DATASET_MVP  = os.path.join(DATA_DIR, "processed", "dataset_yara_mvp.json")
+DATASET_MVP   = os.path.join(DATA_DIR, "mock_knowledge_base.json")
 
 # Production dataset (delivered by NLP team — 3046 entries)
-DATASET_PROD = os.path.join(DATA_DIR, "processed", "dataset_production_enriched.json")
+DATASET_PROD = os.path.join(DATA_DIR, "processed", "filtered", "dataset_production_enriched.json")
 
 # Active dataset — switch here to change dataset
 DATASET_PATH = DATASET_PROD if os.path.exists(
-    os.path.join(DATA_DIR, "processed", "dataset_production_enriched.json")
+    os.path.join(DATA_DIR, "processed","filtered", "dataset_production_enriched.json")
 ) else DATASET_MVP
 
 INDEX_DIR    = os.path.join(DATA_DIR, "indexes")
+INDEX_DIR        = os.path.join(DATA_DIR, "indexes")
+FAISS_INDEX_PATH = os.path.join(INDEX_DIR, "faiss_index.bin")
+BM25_INDEX_PATH  = os.path.join(INDEX_DIR, "bm25_index.pkl")
+EMBEDDINGS_PATH  = os.path.join(INDEX_DIR, "embeddings.npy")
+META_PATH        = os.path.join(INDEX_DIR, "metadata.json")
 
 # ── Embedding model ────────────────────────────────────────────────────────
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
