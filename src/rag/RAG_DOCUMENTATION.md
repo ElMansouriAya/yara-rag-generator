@@ -8,8 +8,6 @@
 
 ## Table of Contents
 
-## Table of Contents
-
 1. Overview
 2. What the RAG team produced
 3. Repository structure
