@@ -180,12 +180,13 @@ The system automatically handles index state:
 | Corrupted index | Rebuild automatically | ~30s |
 
 ### Index Files 
-
+```
 data/indexes/
 ├── faiss_index.bin      ← FAISS vector database (~4.7 MB for 3046 docs)
 ├── bm25_index.pkl       ← BM25 sparse index (~1.5 MB)
 ├── metadata.json        ← Hash + config + build date
 └── embeddings.npy       ← Vector cache (optional, auto-generated)
+```
 
 ### Manual Rebuild
 
@@ -201,7 +202,7 @@ python rebuild_indexes.py --dataset data/processed/filtered/dataset_production_e
 ```
 
 ### Expected output:
-
+```
 [rebuild] Dataset  : data/processed/filtered/dataset_production_enriched.json
 [rebuild] Index dir: data/indexes/
 [rebuild] Cleared existing indexes
@@ -210,6 +211,7 @@ python rebuild_indexes.py --dataset data/processed/filtered/dataset_production_e
   bm25_index.pkl                 1533.6 KB
   faiss_index.bin                4749.0 KB
   metadata.json                  0.5 KB
+```
 
 ### Hash-based Change Detection
 The system detects dataset changes via MD5 hash:
