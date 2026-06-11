@@ -1,0 +1,96 @@
+# ============================================
+# PYTHON
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+
+# ============================================
+# ENVIRONNEMENTS & SECRETS
+# ============================================
+.env
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# ============================================
+# JUPYTER NOTEBOOK
+# ============================================
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ============================================
+# IDE
+# ============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ============================================
+# OS
+# ============================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============================================
+# LOGS
+# ============================================
+*.log
+
+# ============================================
+# DONNÉES DU PROJET
+# ============================================
+
+# Embeddings (fichiers trop volumineux)
+data/embeddings/
+
+# Données brutes externes (Drive, sources tierces)
+data/raw/
+
+# Fichiers bruts non versionnés
+*.pdf
+*.html
+*.htm
+*.yar
+*.yara
+*.docx
+*.doc
+
+# ============================================
+# DATASET DE PRODUCTION
+# ============================================
+
+# Ignorer tout le contenu du dossier filtered
+data/processed/filtered/**
+
+# Conserver uniquement le dataset enrichi pour le RAG
+!data/processed/filtered/dataset_production_enriched.json
