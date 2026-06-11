@@ -34,7 +34,6 @@ from src.rag.evaluation.metrics     import evaluate_result, average_metrics
 from src.rag.evaluation.yara_validator import validate
 
 # ── Test queries + references ────────────────────────────────────────────────
-# run_benchmark.py — LIGNES 28-55 (TEST_QUERIES + REFERENCES)
 
 TEST_QUERIES = [
     "LockBit ransomware encrypting files with AES-256 and deleting shadow copies via vssadmin",

@@ -8,19 +8,22 @@
 
 ## Table of Contents
 
+## Table of Contents
+
 1. Overview
 2. What the RAG team produced
 3. Repository structure
-4. Public API — complete reference
-5. Dataset integration (from NLP team)
-6. RAG architectures — how they work
-7. Agents — roles and interactions
-8. LLM models — comparison and usage
-9. Evaluation metrics — complete list
-10. How to run the benchmark
-11. Integration guide for Dashboard team
-12. Known limitations
-13. Full usage examples
+4. Index Management
+5. Public API — complete reference
+6. Dataset integration (from NLP team)
+7. RAG architectures — how they work
+8. Agents — roles and interactions
+9. LLM models — comparison and usage
+10. Evaluation metrics — complete list
+11. How to run the benchmark
+12. Integration guide for Dashboard team
+13. Known limitations
+14. Full usage examples
 
 ---
 
@@ -94,7 +97,7 @@ YARA Rule + Metrics + Explanation
 ## 3. Repository Structure
 
 ```
-yara-rag-system/
+yara-rag-generator/
 │
 ├── api.py                          ← PUBLIC API for Dashboard team
 ├── run_benchmark.py                ← benchmark script (all modes × all models)
@@ -104,12 +107,15 @@ yara-rag-system/
 │
 ├── data/
 │   ├── raw/                        ← PDFs (gitignored)
-│   ├── extracted/                  ← NLP intermediate outputs
+│   ├── dataset_yara_mvp.json              ← dev/testing (32 records)
 │   ├── processed/
-│   │   ├── dataset_production_enriched.json   ← NLP team delivery (3046 records)
-│   │   ├── dataset_yara_mvp.json              ← dev/testing (32 records)
-│   │   └── DATASET_CONTRACT.md               ← NLP → RAG contract
-│   └── indexes/                    ← FAISS + BM25 saved indexes
+│   │   ├── filtered/
+│   │       └── dataset_production_enriched.json   ← NLP team delivery (3046 records)
+│   └── indexes/                    ← FAISS + BM25 saved indexes (gitignored)
+│       ├── faiss_index.bin         ← FAISS vector database (~4.7 MB)
+│       ├── bm25_index.pkl          ← BM25 sparse index (~1.5 MB)
+│       ├── metadata.json           ← hash + config + build date
+│       └── embeddings.npy          ← vector cache (optional, auto-generated)
 │
 ├── src/
 │   ├── rag/                        ← RAG team code (feature/rag branch)
@@ -160,7 +166,60 @@ yara-rag-system/
 
 ---
 
-## 4. Public API — Complete Reference
+---
+
+## 4. Index Management ← NEW SECTION
+
+### Automatic Detection
+
+The system automatically handles index state:
+
+| Scenario | Behavior | Time |
+|----------|----------|------|
+| First run | Build FAISS + BM25 indexes | ~30s |
+| Subsequent runs | Load from disk | ~1s |
+| Dataset changed | Detect via hash, auto-rebuild | ~30s |
+| Corrupted index | Rebuild automatically | ~30s |
+
+### Index Files 
+
+data/indexes/
+├── faiss_index.bin      ← FAISS vector database (~4.7 MB for 3046 docs)
+├── bm25_index.pkl       ← BM25 sparse index (~1.5 MB)
+├── metadata.json        ← Hash + config + build date
+└── embeddings.npy       ← Vector cache (optional, auto-generated)
+
+### Manual Rebuild
+
+Force rebuild after dataset updates:
+
+```bash
+python rebuild_indexes.py
+```
+
+With custom dataset:
+```bash
+python rebuild_indexes.py --dataset data/processed/filtered/dataset_production_enriched.json
+```
+
+### Expected output:
+
+[rebuild] Dataset  : data/processed/filtered/dataset_production_enriched.json
+[rebuild] Index dir: data/indexes/
+[rebuild] Cleared existing indexes
+[rebuild] Done — 3166 documents indexed
+[rebuild] Files saved:
+  bm25_index.pkl                 1533.6 KB
+  faiss_index.bin                4749.0 KB
+  metadata.json                  0.5 KB
+
+### Hash-based Change Detection
+The system detects dataset changes via MD5 hash:
+dataset_path + num_docs + first_doc_id
+If hash mismatch → automatic rebuild
+If model changed → automatic rebuild
+
+## 5. Public API — Complete Reference
 
 The Dashboard team uses **only** `api.py`. No other imports needed.
 
@@ -313,7 +372,7 @@ result = api.generate(query, mode="agentic")  # override for this call
 
 ---
 
-## 5. Dataset Integration (from NLP team)
+## 6. Dataset Integration (from NLP team)
 
 ### File expected
 
@@ -349,7 +408,7 @@ original_only = filter_synthetic(data, include=False)
 
 ---
 
-## 6. RAG Architectures
+## 7. RAG Architectures
 
 ### Classic RAG
 ```
@@ -399,7 +458,7 @@ Used for comparison only. Produces hallucinations and invalid syntax.
 
 ---
 
-## 7. Agents — Roles and Interactions
+## 8. Agents — Roles and Interactions
 
 ### QueryAnalyzer
 - **Input:** `query: str`
@@ -425,7 +484,7 @@ Used for comparison only. Produces hallucinations and invalid syntax.
 
 ---
 
-## 8. LLM Models
+## 9. LLM Models
 
 | Model | Size | VRAM | Speed | Quality | Use case |
 |---|---|---|---|---|---|
@@ -440,7 +499,7 @@ api.use_model("mistral")   # no KB reload
 
 ---
 
-## 9. Evaluation Metrics
+## 10. Evaluation Metrics
 
 | Metric | Category | What it measures |
 |---|---|---|
@@ -467,7 +526,7 @@ meta:          × 0.10
 
 ---
 
-## 10. Running the Benchmark
+## 11. Running the Benchmark
 
 ### Quick start (Qwen only)
 ```bash
@@ -504,7 +563,7 @@ python run_benchmark.py --quiet
 
 ---
 
-## 11. Integration Guide for Dashboard Team
+## 12. Integration Guide for Dashboard Team
 
 See `DASHBOARD_GUIDE.md` for the complete guide with Gradio examples.
 
@@ -528,7 +587,7 @@ api = YARARAGAPI()
 
 ---
 
-## 12. Known Limitations
+## 13. Known Limitations
 
 | Issue | Impact | Notes |
 |---|---|---|
@@ -540,7 +599,7 @@ api = YARARAGAPI()
 
 ---
 
-## 13. Full Usage Examples
+## 14. Full Usage Examples
 
 ### Example 1 — Basic generation
 
