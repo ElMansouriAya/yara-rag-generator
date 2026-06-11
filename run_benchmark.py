@@ -34,26 +34,32 @@ from src.rag.evaluation.metrics     import evaluate_result, average_metrics
 from src.rag.evaluation.yara_validator import validate
 
 # ── Test queries + references ────────────────────────────────────────────────
+# run_benchmark.py — LIGNES 28-55 (TEST_QUERIES + REFERENCES)
+
 TEST_QUERIES = [
-    "Ransomware encrypting files with AES and deleting shadow copies",
-    "Keylogger intercepting keystrokes and exfiltrating via FTP",
-    "Worm spreading through SMB network shares",
-    "Backdoor using DNS tunneling for C2 communication",
-    "Cryptominer using XMRig to mine Monero",
-    "Trojan injecting code into browser to steal banking credentials",
-    "Spyware taking screenshots and uploading via HTTP",
-    "Dropper disguised as PDF downloading remote payload",
+    "LockBit ransomware encrypting files with AES-256 and deleting shadow copies via vssadmin",
+    "WannaCry ransomworm exploiting EternalBlue MS17-010 for lateral movement and file encryption",
+    "QuasarRAT trojan with keylogging and screenshot capture exfiltrating via FTP",
+    "CobaltStrike beacon using DNS tunneling for command and control communication",
+    "XMRig cryptominer connecting to stratum+tcp pool for Monero mining",
+    "Dridex banking trojan injecting code into browser to steal credentials from login pages",
+    "Mimikatz tool harvesting credentials from LSASS memory and Windows registry",
+    "Worm propagating through SMB network shares and NetShareEnum for lateral movement",
+    "Spyware using BitBlt for screenshots and InternetOpenUrl for HTTP exfiltration",
+    "Dropper disguised as PDF document using WinExec to download remote payload",
 ]
 
 REFERENCES = [
-    'rule AES_Ransomware { strings: $aes="AES" nocase $shadow="vssadmin delete shadows" nocase condition: $aes and $shadow }',
-    'rule Keylogger_FTP { strings: $hook="SetWindowsHookEx" nocase $ftp="FtpPutFile" nocase condition: $hook and $ftp }',
-    'rule SMB_Worm { strings: $smb="NetShareEnum" nocase $admin="ADMIN$" nocase condition: 2 of them }',
-    'rule DNS_Backdoor { strings: $dns="DnsQuery" nocase $b64="base64" nocase condition: $dns and $b64 }',
-    'rule XMRig_Miner { strings: $xmr="xmrig" nocase $stratum="stratum+tcp://" nocase condition: $xmr or $stratum }',
-    'rule Banking_Trojan { strings: $crt="CreateRemoteThread" nocase $form="login.php" nocase condition: $crt and $form }',
-    'rule Screenshot_Spy { strings: $blt="BitBlt" nocase $http="InternetOpenUrl" nocase condition: $blt and $http }',
-    'rule Fake_PDF_Drop { strings: $pdf="%PDF" nocase $exec="WinExec" nocase condition: $pdf and $exec }',
+    'rule LockBit_Ransomware { meta: description="LockBit ransomware" strings: $aes="AES-256" nocase $vss="vssadmin delete shadows" nocase condition: $aes and $vss }',
+    'rule WannaCry_Ransomworm { meta: description="WannaCry" strings: $smb="MS17-010" nocase $svc="mssecsvc.exe" nocase $ext=".wncry" nocase condition: 2 of them }',
+    'rule QuasarRAT_Trojan { meta: description="QuasarRAT" strings: $keylog="SetWindowsHookEx" nocase $ftp="FtpPutFile" nocase $screen="BitBlt" nocase condition: 2 of them }',
+    'rule CobaltStrike_DNS { meta: description="CobaltStrike DNS beacon" strings: $dns="DnsQuery" nocase $b64="base64" nocase $beacon="beacon" nocase condition: $dns and $beacon }',
+    'rule XMRig_Miner { meta: description="XMRig miner" strings: $xmr="xmrig" nocase $stratum="stratum+tcp://" nocase condition: $xmr or $stratum }',
+    'rule Dridex_Banker { meta: description="Dridex banking trojan" strings: $inject="CreateRemoteThread" nocase $login="login.php" nocase condition: $inject and $login }',
+    'rule Mimikatz_Credential { meta: description="Mimikatz credential harvester" strings: $lsass="sekurlsa" nocase $reg="HKEY_LOCAL_MACHINE" nocase condition: $lsass or $reg }',
+    'rule SMB_Worm { meta: description="SMB worm" strings: $smb="NetShareEnum" nocase $admin="ADMIN$" nocase condition: 2 of them }',
+    'rule Screenshot_Spy { meta: description="Screenshot spyware" strings: $blt="BitBlt" nocase $http="InternetOpenUrl" nocase condition: $blt and $http }',
+    'rule Fake_PDF_Drop { meta: description="Fake PDF dropper" strings: $pdf="%PDF" nocase $exec="WinExec" nocase condition: $pdf and $exec }',
 ]
 
 MODES   = ["classic", "hybrid", "agentic"]
